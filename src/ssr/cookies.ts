@@ -1,7 +1,7 @@
 import { getJwtExpiration } from '../lib/jwt';
 
-export const DEFAULT_ACCESS_TOKEN_COOKIE = 'insforge_access_token';
-export const DEFAULT_REFRESH_TOKEN_COOKIE = 'insforge_refresh_token';
+export const DEFAULT_ACCESS_TOKEN_COOKIE = 'yarah_access_token';
+export const DEFAULT_REFRESH_TOKEN_COOKIE = 'yarah_refresh_token';
 
 export interface AuthCookieNames {
   accessToken?: string;

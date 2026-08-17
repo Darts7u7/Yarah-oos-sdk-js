@@ -1,5 +1,5 @@
 import { HttpClient, parseResponse, serializeBody } from '../lib/http-client';
-import { InsForgeError } from '../types';
+import { YarahError } from '../types';
 
 export interface FunctionInvokeOptions {
   /**
@@ -39,18 +39,18 @@ export class Functions {
 
   /**
    * Derive the subhosting URL from the base URL.
-   * Base URL pattern: https://{appKey}.{region}.insforge.app
-   * Functions URL:    https://{appKey}.function2.insforge.app
-   * Only applies to .insforge.app domains.
+   * Base URL pattern: https://{appKey}.{region}.apps.yarah.dev
+   * Functions URL:    https://{appKey}.functions.yarah.dev
+   * Only applies to .apps.yarah.dev domains.
    */
   private static deriveSubhostingUrl(baseUrl: string): string | undefined {
     try {
       const { hostname } = new URL(baseUrl);
-      if (!hostname.endsWith('.insforge.app')) {
+      if (!hostname.endsWith('.apps.yarah.dev')) {
         return undefined;
       }
       const appKey = hostname.split('.')[0];
-      return `https://${appKey}.function2.insforge.app`;
+      return `https://${appKey}.functions.yarah.dev`;
     } catch {
       return undefined;
     }
@@ -66,7 +66,7 @@ export class Functions {
     body: unknown,
     callerHeaders: Record<string, string>
   ): Request {
-    const url = new URL('/' + slug, 'http://insforge.local').toString();
+    const url = new URL('/' + slug, 'http://yarah.local').toString();
     // Start from HttpClient defaults (Authorization, anon key, etc.) so
     // in-process calls carry the same auth context as HTTP calls.
     const headers: Record<string, string> = { ...this.http.getHeaders() };
@@ -83,7 +83,7 @@ export class Functions {
    * Invoke an Edge Function.
    *
    * Dispatch order:
-   * 1. If `globalThis.__insforge_dispatch__` is present, call it in-process.
+   * 1. If `globalThis.__yarah_dispatch__` is present, call it in-process.
    *    This avoids Deno Subhosting's 508 Loop Detected when one bundled
    *    function invokes another inside the same deployment.
    * 2. Otherwise, try the configured subhosting URL.
@@ -95,13 +95,13 @@ export class Functions {
   async invoke<T = any>(
     slug: string,
     options: FunctionInvokeOptions = {}
-  ): Promise<{ data: T | null; error: InsForgeError | null }> {
+  ): Promise<{ data: T | null; error: YarahError | null }> {
     const { method = 'POST', body, headers = {} } = options;
 
     // 1. In-process dispatch (same Deno deployment as the router).
     // Only short-circuit when the target is the local derived subhosting URL —
     // otherwise we'd misroute cross-deployment calls to the local router.
-    const dispatch = globalThis.__insforge_dispatch__;
+    const dispatch = globalThis.__yarah_dispatch__;
     const localFunctionsUrl = Functions.deriveSubhostingUrl(this.http.baseUrl);
     if (
       typeof dispatch === 'function' &&
@@ -120,9 +120,9 @@ export class Functions {
         return {
           data: null,
           error:
-            error instanceof InsForgeError
+            error instanceof YarahError
               ? error
-              : new InsForgeError(
+              : new YarahError(
                   error instanceof Error ? error.message : 'Function invocation failed',
                   500,
                   'FUNCTION_ERROR'
@@ -143,15 +143,15 @@ export class Functions {
         if (error instanceof Error && error.name === 'AbortError') {
           throw error;
         }
-        if (error instanceof InsForgeError && error.statusCode === 404) {
+        if (error instanceof YarahError && error.statusCode === 404) {
           // fall through to proxy
         } else {
           return {
             data: null,
             error:
-              error instanceof InsForgeError
+              error instanceof YarahError
                 ? error
-                : new InsForgeError(
+                : new YarahError(
                     error instanceof Error ? error.message : 'Function invocation failed',
                     500,
                     'FUNCTION_ERROR'
@@ -173,9 +173,9 @@ export class Functions {
       return {
         data: null,
         error:
-          error instanceof InsForgeError
+          error instanceof YarahError
             ? error
-            : new InsForgeError(
+            : new YarahError(
                 error instanceof Error ? error.message : 'Function invocation failed',
                 500,
                 'FUNCTION_ERROR'

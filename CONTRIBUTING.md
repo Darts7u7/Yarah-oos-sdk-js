@@ -1,6 +1,6 @@
-# Contributing to InsForge SDK
+# Contributing to Yarah SDK
 
-Thanks for helping improve the InsForge JavaScript SDK.
+Thanks for helping improve the Yarah JavaScript SDK.
 
 ## Development Setup
 

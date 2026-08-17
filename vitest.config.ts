@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   ssr: {
-    noExternal: ['@insforge/shared-schemas'],
+    noExternal: ['@yarahdev/shared-schemas'],
   },
   test: {
     globals: true,

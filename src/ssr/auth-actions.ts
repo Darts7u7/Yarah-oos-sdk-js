@@ -1,5 +1,5 @@
-import { InsForgeClient } from '../client';
-import type { InsForgeConfig, InsForgeError } from '../types';
+import { YarahClient } from '../client';
+import type { YarahConfig, YarahError } from '../types';
 import { createServerClient } from './server-client';
 import {
   clearAuthCookies,
@@ -11,7 +11,7 @@ import {
 
 export interface CreateAuthActionsOptions
   extends
-    Omit<InsForgeConfig, 'accessToken' | 'edgeFunctionToken' | 'isServerMode' | 'auth'>,
+    Omit<YarahConfig, 'accessToken' | 'edgeFunctionToken' | 'isServerMode' | 'auth'>,
     AuthCookieSettings {
   /**
    * Read/write cookie store. Use this in Next.js Server Actions:
@@ -39,19 +39,19 @@ type SafeAuthAction<TMethod extends (...args: any[]) => Promise<any>> = (
   ...args: Parameters<TMethod>
 ) => Promise<{
   data: SafeAuthData<AuthResultData<TMethod>> | null;
-  error: InsForgeError | null;
+  error: YarahError | null;
 }>;
 
 export interface AuthActions {
-  signUp: SafeAuthAction<InsForgeClient['auth']['signUp']>;
-  signInWithPassword: SafeAuthAction<InsForgeClient['auth']['signInWithPassword']>;
-  signInWithOAuth: InsForgeClient['auth']['signInWithOAuth'];
-  signInWithIdToken: SafeAuthAction<InsForgeClient['auth']['signInWithIdToken']>;
-  exchangeOAuthCode: SafeAuthAction<InsForgeClient['auth']['exchangeOAuthCode']>;
-  verifyEmail: SafeAuthAction<InsForgeClient['auth']['verifyEmail']>;
-  signInWithOtp: InsForgeClient['auth']['signInWithOtp'];
-  verifyOtp: SafeAuthAction<InsForgeClient['auth']['verifyOtp']>;
-  signOut: InsForgeClient['auth']['signOut'];
+  signUp: SafeAuthAction<YarahClient['auth']['signUp']>;
+  signInWithPassword: SafeAuthAction<YarahClient['auth']['signInWithPassword']>;
+  signInWithOAuth: YarahClient['auth']['signInWithOAuth'];
+  signInWithIdToken: SafeAuthAction<YarahClient['auth']['signInWithIdToken']>;
+  exchangeOAuthCode: SafeAuthAction<YarahClient['auth']['exchangeOAuthCode']>;
+  verifyEmail: SafeAuthAction<YarahClient['auth']['verifyEmail']>;
+  signInWithOtp: YarahClient['auth']['signInWithOtp'];
+  verifyOtp: SafeAuthAction<YarahClient['auth']['verifyOtp']>;
+  signOut: YarahClient['auth']['signOut'];
 }
 
 function persistSessionCookies(
@@ -131,13 +131,13 @@ export function createAuthActions(options: CreateAuthActionsOptions = {}): AuthA
     signUp: async (request) => {
       const result = await createClient().auth.signUp(request);
       persistSessionCookies(writeCookies, result.data, cookieSettings);
-      return toSafeAuthResult<InsForgeClient['auth']['signUp']>(result);
+      return toSafeAuthResult<YarahClient['auth']['signUp']>(result);
     },
 
     signInWithPassword: async (request) => {
       const result = await createClient().auth.signInWithPassword(request);
       persistSessionCookies(writeCookies, result.data, cookieSettings);
-      return toSafeAuthResult<InsForgeClient['auth']['signInWithPassword']>(result);
+      return toSafeAuthResult<YarahClient['auth']['signInWithPassword']>(result);
     },
 
     signInWithOAuth: async (providerOrOptions: any, signInOptions?: any) => {
@@ -147,19 +147,19 @@ export function createAuthActions(options: CreateAuthActionsOptions = {}): AuthA
     signInWithIdToken: async (credentials) => {
       const result = await createClient().auth.signInWithIdToken(credentials);
       persistSessionCookies(writeCookies, result.data, cookieSettings);
-      return toSafeAuthResult<InsForgeClient['auth']['signInWithIdToken']>(result);
+      return toSafeAuthResult<YarahClient['auth']['signInWithIdToken']>(result);
     },
 
     exchangeOAuthCode: async (code, codeVerifier) => {
       const result = await createClient().auth.exchangeOAuthCode(code, codeVerifier);
       persistSessionCookies(writeCookies, result.data, cookieSettings);
-      return toSafeAuthResult<InsForgeClient['auth']['exchangeOAuthCode']>(result);
+      return toSafeAuthResult<YarahClient['auth']['exchangeOAuthCode']>(result);
     },
 
     verifyEmail: async (request) => {
       const result = await createClient().auth.verifyEmail(request);
       persistSessionCookies(writeCookies, result.data, cookieSettings);
-      return toSafeAuthResult<InsForgeClient['auth']['verifyEmail']>(result);
+      return toSafeAuthResult<YarahClient['auth']['verifyEmail']>(result);
     },
 
     signInWithOtp: async (request) => {
@@ -169,7 +169,7 @@ export function createAuthActions(options: CreateAuthActionsOptions = {}): AuthA
     verifyOtp: async (request) => {
       const result = await createClient().auth.verifyOtp(request);
       persistSessionCookies(writeCookies, result.data, cookieSettings);
-      return toSafeAuthResult<InsForgeClient['auth']['verifyOtp']>(result);
+      return toSafeAuthResult<YarahClient['auth']['verifyOtp']>(result);
     },
 
     signOut: async () => {

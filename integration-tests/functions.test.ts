@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { createClient, getTestEnv } from './setup';
-import { InsForgeClient } from '../src/client';
+import { YarahClient } from '../src/client';
 
 /**
  * Edge Functions integration tests.
@@ -19,7 +19,7 @@ import { InsForgeClient } from '../src/client';
  */
 
 describe('Functions Module', () => {
-  let client: InsForgeClient;
+  let client: YarahClient;
 
   beforeAll(() => {
     client = createClient();
@@ -157,7 +157,7 @@ describe('Functions Module', () => {
     it('should fall back to proxy when functionsUrl returns 404', async () => {
       const env = getTestEnv();
       // Point functionsUrl to a URL that will 404, forcing fallback to proxy
-      const customClient = new InsForgeClient({
+      const customClient = new YarahClient({
         baseUrl: env.baseUrl,
         anonKey: env.anonKey,
         functionsUrl: `${env.baseUrl}/nonexistent-subhosting`,

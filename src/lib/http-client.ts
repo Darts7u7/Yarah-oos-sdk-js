@@ -1,4 +1,4 @@
-import { InsForgeConfig, ApiError, InsForgeError, AuthRefreshResponse } from '../types';
+import { YarahConfig, ApiError, YarahError, AuthRefreshResponse } from '../types';
 import { Logger } from './logger';
 import {
   AuthChangeEvent,
@@ -52,13 +52,13 @@ export function serializeBody(
 }
 
 /**
- * Parse a fetch Response into typed data, mapping non-2xx to InsForgeError.
+ * Parse a fetch Response into typed data, mapping non-2xx to YarahError.
  * - 204 → undefined
  * - JSON content-type → parsed JSON
  * - other content-type → text
- * - body parse failure → InsForgeError(PARSE_ERROR | REQUEST_FAILED)
- * - non-2xx with `{ error, message }` body → InsForgeError.fromApiError, all extra fields preserved
- * - non-2xx without that shape → InsForgeError(REQUEST_FAILED)
+ * - body parse failure → YarahError(PARSE_ERROR | REQUEST_FAILED)
+ * - non-2xx with `{ error, message }` body → YarahError.fromApiError, all extra fields preserved
+ * - non-2xx without that shape → YarahError(REQUEST_FAILED)
  */
 export async function parseResponse<T>(response: Response): Promise<T> {
   if (response.status === 204) {
@@ -74,7 +74,7 @@ export async function parseResponse<T>(response: Response): Promise<T> {
       data = await response.text();
     }
   } catch (parseErr: any) {
-    throw new InsForgeError(
+    throw new YarahError(
       `Failed to parse response body: ${parseErr?.message || 'Unknown error'}`,
       response.status,
       response.ok ? 'PARSE_ERROR' : 'REQUEST_FAILED'
@@ -84,7 +84,7 @@ export async function parseResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     if (data && typeof data === 'object' && 'error' in data) {
       data.statusCode ??= data.status ?? response.status;
-      const error = InsForgeError.fromApiError(data as ApiError);
+      const error = YarahError.fromApiError(data as ApiError);
       Object.keys(data).forEach((key) => {
         if (key !== 'error' && key !== 'message' && key !== 'statusCode') {
           (error as any)[key] = data[key];
@@ -92,7 +92,7 @@ export async function parseResponse<T>(response: Response): Promise<T> {
       });
       throw error;
     }
-    throw new InsForgeError(
+    throw new YarahError(
       `Request failed: ${response.statusText}`,
       response.status,
       'REQUEST_FAILED'
@@ -109,7 +109,7 @@ export async function parseResponse<T>(response: Response): Promise<T> {
 export class HttpClient {
   public readonly baseUrl: string;
   public readonly fetch: typeof fetch;
-  private readonly config: InsForgeConfig;
+  private readonly config: YarahConfig;
   private defaultHeaders: Record<string, string>;
   private anonKey: string | undefined;
   private userToken: string | null = null;
@@ -128,7 +128,7 @@ export class HttpClient {
    * @param tokenManager - Token manager for session persistence.
    * @param logger - Optional logger instance for request/response debugging.
    */
-  constructor(config: InsForgeConfig, tokenManager?: TokenManager, logger?: Logger) {
+  constructor(config: YarahConfig, tokenManager?: TokenManager, logger?: Logger) {
     this.config = config;
     this.baseUrl = config.baseUrl || 'http://localhost:7130';
     // Properly bind fetch to maintain its context
@@ -296,7 +296,7 @@ export class HttpClient {
           }
           // Drain the body to free the connection before retrying.
           await response.body?.cancel();
-          lastError = new InsForgeError(
+          lastError = new YarahError(
             `Server error: ${response.status} ${response.statusText}`,
             response.status,
             'SERVER_ERROR'
@@ -321,7 +321,7 @@ export class HttpClient {
             this.timeout > 0 &&
             !callerSignal?.aborted
           ) {
-            throw new InsForgeError(
+            throw new YarahError(
               `Request timed out after ${this.timeout}ms`,
               408,
               'REQUEST_TIMEOUT'
@@ -337,7 +337,7 @@ export class HttpClient {
           continue;
         }
 
-        throw new InsForgeError(
+        throw new YarahError(
           `Network request failed: ${err?.message || 'Unknown error'}`,
           0,
           'NETWORK_ERROR'
@@ -347,7 +347,7 @@ export class HttpClient {
 
     // Should not normally reach here, but safety net after exhausting retries.
     throw (
-      lastError || new InsForgeError('Request failed after all retry attempts', 0, 'NETWORK_ERROR')
+      lastError || new YarahError('Request failed after all retry attempts', 0, 'NETWORK_ERROR')
     );
   }
 
@@ -359,7 +359,7 @@ export class HttpClient {
    * @param path - API path relative to the base URL.
    * @param options - Optional request configuration including headers, body, and query params.
    * @returns Parsed response data.
-   * @throws {InsForgeError} On timeout, network failure, or HTTP error responses.
+   * @throws {YarahError} On timeout, network failure, or HTTP error responses.
    */
   private async handleRequest<T>(
     method: string,
@@ -431,14 +431,14 @@ export class HttpClient {
     });
 
     // Parse body via shared helper; logger fires after either way.
-    // Note: error-path logger now receives the InsForgeError instance
+    // Note: error-path logger now receives the YarahError instance
     // (not the raw body) and uses err.statusCode as primary source.
     // Parse failures are now logged here too (previously not logged).
     let data: T;
     try {
       data = await parseResponse<T>(response);
     } catch (err) {
-      if (err instanceof InsForgeError) {
+      if (err instanceof YarahError) {
         this.logger.logResponse(
           method,
           url,
@@ -460,7 +460,7 @@ export class HttpClient {
       return await this.handleRequest<T>(method, path, { ...options }, tokenUsed);
     } catch (error) {
       if (
-        !(error instanceof InsForgeError) ||
+        !(error instanceof YarahError) ||
         !this.shouldRefreshAccessToken(error.statusCode, error.error, tokenUsed, options)
       ) {
         throw error;
@@ -485,7 +485,7 @@ export class HttpClient {
         await this.refreshAndSaveSession();
       } catch (error) {
         if (
-          error instanceof InsForgeError &&
+          error instanceof YarahError &&
           (error.statusCode === 401 || error.statusCode === 403)
         ) {
           this.clearAuthSession();
@@ -601,7 +601,7 @@ export class HttpClient {
       newTokenData = await this.refreshAndSaveSession();
     } catch (error) {
       if (
-        error instanceof InsForgeError &&
+        error instanceof YarahError &&
         (error.statusCode === 401 || error.statusCode === 403)
       ) {
         this.clearAuthSession();
@@ -715,7 +715,7 @@ export class HttpClient {
       return refreshed.accessToken;
     } catch (error) {
       if (
-        error instanceof InsForgeError &&
+        error instanceof YarahError &&
         (error.statusCode === 401 || error.statusCode === 403) &&
         this.userToken === accessToken
       ) {

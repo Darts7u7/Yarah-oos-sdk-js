@@ -1,10 +1,10 @@
 /**
- * Token Manager for InsForge SDK
+ * Token Manager for Yarah SDK
  *
  * Memory-only token storage.
  */
 
-import type { UserSchema } from '@insforge/shared-schemas';
+import type { UserSchema } from '@yarahdev/shared-schemas';
 import type { AuthSession } from '../types';
 
 export const AuthChangeEvent = {
@@ -17,7 +17,7 @@ export type AuthChangeEvent = (typeof AuthChangeEvent)[keyof typeof AuthChangeEv
 export type AuthStateChangeCallback = (event: AuthChangeEvent) => void;
 
 // CSRF token cookie name
-export const CSRF_TOKEN_COOKIE = 'insforge_csrf_token';
+export const CSRF_TOKEN_COOKIE = 'yarah_csrf_token';
 
 /**
  * Get CSRF token from cookie

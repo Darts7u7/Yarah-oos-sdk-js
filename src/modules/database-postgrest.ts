@@ -7,9 +7,9 @@ import { PostgrestClient } from '@supabase/postgrest-js';
 import { HttpClient } from '../lib/http-client';
 
 /**
- * Custom fetch that maps postgrest-js URLs to InsForge database endpoints.
+ * Custom fetch that maps postgrest-js URLs to Yarah database endpoints.
  */
-function createInsForgePostgrestFetch(httpClient: HttpClient): typeof fetch {
+function createYarahPostgrestFetch(httpClient: HttpClient): typeof fetch {
   return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url = typeof input === 'string' ? input : input.toString();
     const urlObj = new URL(url);
@@ -19,20 +19,20 @@ function createInsForgePostgrestFetch(httpClient: HttpClient): typeof fetch {
     // postgrest-js sends: http://dummy/rpc/functionname?params for RPC
     const pathname = urlObj.pathname.slice(1);
 
-    // Route to appropriate InsForge endpoint
+    // Route to appropriate Yarah endpoint
     const rpcMatch = pathname.match(/^rpc\/(.+)$/);
     const endpoint = rpcMatch
       ? `/api/database/rpc/${rpcMatch[1]}`
       : `/api/database/records/${pathname}`;
 
-    const insforgeUrl = `${httpClient.baseUrl}${endpoint}${urlObj.search}`;
+    const yarahUrl = `${httpClient.baseUrl}${endpoint}${urlObj.search}`;
 
     const headers = new Headers(httpClient.getHeaders());
     new Headers(init?.headers).forEach((value, key) => {
       headers.set(key, value);
     });
 
-    const response = await httpClient.rawFetch(insforgeUrl, {
+    const response = await httpClient.rawFetch(yarahUrl, {
       ...init,
       headers,
     });
@@ -51,9 +51,9 @@ export class Database {
   constructor(httpClient: HttpClient, defaultSchema?: string) {
     // Create postgrest client with custom fetch. `schema` sets the default
     // profile; postgrest-js attaches Accept-Profile/Content-Profile headers,
-    // which the InsForge data API resolves to the target schema.
+    // which the Yarah data API resolves to the target schema.
     this.postgrest = new PostgrestClient<any, any, any>('http://dummy', {
-      fetch: createInsForgePostgrestFetch(httpClient),
+      fetch: createYarahPostgrestFetch(httpClient),
       headers: {},
       ...(defaultSchema ? { schema: defaultSchema } : {}),
     });

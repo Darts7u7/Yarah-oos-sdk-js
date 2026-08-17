@@ -1,17 +1,17 @@
-# InsForge SDK Reference
+# Yarah SDK Reference
 
 ## Install
 
 ```bash
-npm install @insforge/sdk
+npm install @yarahdev/sdk
 ```
 
 ## Initialize
 
 ```javascript
-import { createClient } from '@insforge/sdk';
+import { createClient } from '@yarahdev/sdk';
 
-const insforge = createClient({
+const yarah = createClient({
   baseUrl: 'http://localhost:7130',
   anonKey: 'your-anon-key',
 });
@@ -22,11 +22,11 @@ const insforge = createClient({
 ## Admin Client
 
 ```typescript
-import { createAdminClient } from '@insforge/sdk';
+import { createAdminClient } from '@yarahdev/sdk';
 
 const admin = createAdminClient({
   baseUrl: 'http://localhost:7130',
-  apiKey: process.env.INSFORGE_API_KEY!,
+  apiKey: process.env.YARAH_API_KEY!,
 });
 ```
 
@@ -34,25 +34,25 @@ Use this only in trusted server code. The admin client sends `apiKey` as the bea
 
 ## SSR Auth Mode
 
-Use `@insforge/sdk/ssr` for Next.js/SSR. The helpers keep the refresh token server-owned while still making the short-lived access token available to browser-only SDK surfaces such as Storage and Realtime.
+Use `@yarahdev/sdk/ssr` for Next.js/SSR. The helpers keep the refresh token server-owned while still making the short-lived access token available to browser-only SDK surfaces such as Storage and Realtime.
 
 Default env resolution:
 
-- Browser and server: `NEXT_PUBLIC_INSFORGE_URL`, `NEXT_PUBLIC_INSFORGE_ANON_KEY`
+- Browser and server: `NEXT_PUBLIC_YARAH_URL`, `NEXT_PUBLIC_YARAH_ANON_KEY`
 
 Explicit `baseUrl` / `anonKey` values win. Missing SSR config throws a clear error.
 
 Default cookies:
 
-- `insforge_access_token`: `httpOnly: false`, `sameSite: "lax"`, `path: "/"`, expires at the JWT `exp`
-- `insforge_refresh_token`: `httpOnly: true`, `sameSite: "lax"`, `path: "/"`, expires at the JWT `exp`
+- `yarah_access_token`: `httpOnly: false`, `sameSite: "lax"`, `path: "/"`, expires at the JWT `exp`
+- `yarah_refresh_token`: `httpOnly: true`, `sameSite: "lax"`, `path: "/"`, expires at the JWT `exp`
 
 ### `createBrowserClient()`
 
 ```typescript
-import { createBrowserClient } from '@insforge/sdk/ssr';
+import { createBrowserClient } from '@yarahdev/sdk/ssr';
 
-const insforge = createBrowserClient({
+const yarah = createBrowserClient({
   refreshUrl: '/api/auth/refresh', // default
 });
 ```
@@ -67,9 +67,9 @@ not include auth mutations such as `signInWithPassword()`, `signUp()`, or
 
 ```typescript
 import { cookies } from 'next/headers';
-import { createServerClient } from '@insforge/sdk/ssr';
+import { createServerClient } from '@yarahdev/sdk/ssr';
 
-const insforge = createServerClient({
+const yarah = createServerClient({
   cookies: await cookies(),
 });
 ```
@@ -80,7 +80,7 @@ The server client reads only the access-token cookie and passes it as the per-re
 
 ```typescript
 // app/api/auth/refresh/route.ts
-import { createRefreshAuthRouter } from '@insforge/sdk/ssr';
+import { createRefreshAuthRouter } from '@yarahdev/sdk/ssr';
 
 export const { POST } = createRefreshAuthRouter();
 ```
@@ -95,7 +95,7 @@ safe fields.
 'use server';
 
 import { cookies } from 'next/headers';
-import { createAuthActions } from '@insforge/sdk/ssr';
+import { createAuthActions } from '@yarahdev/sdk/ssr';
 
 export async function signIn(formData: FormData) {
   const auth = createAuthActions({ cookies: await cookies() });
@@ -122,7 +122,7 @@ auto-exchange OAuth callbacks.
 Use `refreshAuth()` directly when the route needs app-specific logic:
 
 ```typescript
-import { refreshAuth } from '@insforge/sdk/ssr';
+import { refreshAuth } from '@yarahdev/sdk/ssr';
 
 export async function POST(request: Request) {
   await beforeRefresh(request);
@@ -134,14 +134,14 @@ export async function POST(request: Request) {
 
 ### `updateSession()`
 
-Import `updateSession()` from `@insforge/sdk/ssr/middleware` in Proxy/Middleware
+Import `updateSession()` from `@yarahdev/sdk/ssr/middleware` in Proxy/Middleware
 files. This subpath only includes the session refresh helpers and avoids
 bundling the full SDK client.
 
 ```typescript
 // proxy.ts on Next.js 16+, middleware.ts on Next.js 15 and earlier
 import { NextResponse, type NextRequest } from 'next/server';
-import { updateSession } from '@insforge/sdk/ssr/middleware';
+import { updateSession } from '@yarahdev/sdk/ssr/middleware';
 
 export async function proxy(request: NextRequest) {
   const response = NextResponse.next({ request });
@@ -157,12 +157,12 @@ export async function proxy(request: NextRequest) {
 
 ## OAuth Auto-Detection (Browser)
 
-The SDK automatically detects and handles OAuth callback parameters when initialized. This feature works seamlessly with the InsForge backend OAuth flow.
+The SDK automatically detects and handles OAuth callback parameters when initialized. This feature works seamlessly with the Yarah backend OAuth flow.
 
 **How it works:**
 
 1. User calls `signInWithOAuth()` and is redirected to OAuth provider
-2. After authentication, InsForge redirects back to your app with an `insforge_code` in the URL
+2. After authentication, Yarah redirects back to your app with an `yarah_code` in the URL
 3. SDK automatically exchanges that code for a session on initialization
 4. Session is saved and the URL is cleaned - no manual handling needed
 
@@ -170,12 +170,12 @@ The SDK automatically detects and handles OAuth callback parameters when initial
 
 ```javascript
 // Just initialize the client - OAuth is handled automatically
-const insforge = createClient({
+const yarah = createClient({
   baseUrl: 'http://localhost:7130',
 });
 
 // If the URL contains OAuth callback parameters like:
-// ?insforge_code=...
+// ?yarah_code=...
 // The SDK will:
 // - Exchange the code for a session
 // - Save the session in memory
@@ -183,7 +183,7 @@ const insforge = createClient({
 // - Clean the URL
 
 // You can then immediately use authenticated methods:
-const { data } = await insforge.auth.getCurrentUser();
+const { data } = await yarah.auth.getCurrentUser();
 ```
 
 ## Auth Methods
@@ -191,7 +191,7 @@ const { data } = await insforge.auth.getCurrentUser();
 ### `signUp()`
 
 ```javascript
-await insforge.auth.signUp({
+await yarah.auth.signUp({
   email: 'user@example.com',
   password: 'password123',
   name: 'John Doe', // optional
@@ -208,13 +208,13 @@ If the backend uses link-based email verification, the emailed link opens:
 GET /api/auth/email/verify-link?token=...
 ```
 
-InsForge validates the token first, then redirects the browser to your `redirectTo` URL.
+Yarah validates the token first, then redirects the browser to your `redirectTo` URL.
 Recommended: use your sign-in page as `redirectTo`, then show a success message and ask the user to sign in with email and password.
 
 ### `signInWithPassword()`
 
 ```javascript
-await insforge.auth.signInWithPassword({
+await yarah.auth.signInWithPassword({
   email: 'user@example.com',
   password: 'password123',
 });
@@ -226,7 +226,7 @@ await insforge.auth.signInWithPassword({
 ### `signInWithOAuth()`
 
 ```javascript
-await insforge.auth.signInWithOAuth('google', {
+await yarah.auth.signInWithOAuth('google', {
   redirectTo: 'http://localhost:3000/dashboard',
   additionalParams: { prompt: 'select_account' }, // optional provider-specific OAuth params
   skipBrowserRedirect: true, // optional, returns URL instead of redirecting
@@ -234,12 +234,12 @@ await insforge.auth.signInWithOAuth('google', {
 // Response: { data: { url, provider }, error }
 // Auto-redirects in browser unless skipBrowserRedirect: true
 // additionalParams is for provider-specific hints only. Do not pass client_id, scope,
-// redirect_uri, code_challenge, state, or response_type; InsForge sets those server-side
+// redirect_uri, code_challenge, state, or response_type; Yarah sets those server-side
 // and ignores colliding client-provided keys.
 
 // AUTOMATIC OAuth Callback Detection (v0.0.14+):
 // When users are redirected back from OAuth provider, the SDK automatically:
-// 1. Detects insforge_code in the URL
+// 1. Detects yarah_code in the URL
 // 2. Exchanges the code for a session
 // 3. Saves the session in memory
 // 4. Cleans the URL
@@ -249,7 +249,7 @@ await insforge.auth.signInWithOAuth('google', {
 ### `signOut()`
 
 ```javascript
-await insforge.auth.signOut();
+await yarah.auth.signOut();
 // Response: { error }
 // Clears stored tokens
 ```
@@ -257,7 +257,7 @@ await insforge.auth.signOut();
 ### `getCurrentUser()`
 
 ```javascript
-await insforge.auth.getCurrentUser();
+await yarah.auth.getCurrentUser();
 // Response: { data: { user }, error }
 // user: { id, email, emailVerified, providers, createdAt, updatedAt, profile, metadata }
 // Returns null if not authenticated
@@ -265,12 +265,12 @@ await insforge.auth.getCurrentUser();
 
 For browser apps, call `getCurrentUser()` during startup. The SDK will use the httpOnly refresh cookie automatically when it can refresh the session.
 
-For SSR apps, use `@insforge/sdk/ssr`.
+For SSR apps, use `@yarahdev/sdk/ssr`.
 
 ### `getProfile()`
 
 ```javascript
-await insforge.auth.getProfile(userId);
+await yarah.auth.getProfile(userId);
 // Response: { data: profile, error }
 // profile: { id, nickname, avatar_url, bio, birthday, ... }
 // Gets any user's profile from users table
@@ -279,7 +279,7 @@ await insforge.auth.getProfile(userId);
 ### `setProfile()`
 
 ```javascript
-await insforge.auth.setProfile({
+await yarah.auth.setProfile({
   nickname: 'JohnDoe',
   avatar_url: 'https://...',
   bio: 'Software developer',
@@ -292,7 +292,7 @@ await insforge.auth.setProfile({
 ### `getPublicAuthConfig()`
 
 ```javascript
-await insforge.auth.getPublicAuthConfig();
+await yarah.auth.getPublicAuthConfig();
 // Response: { data: GetPublicAuthConfigResponse, error }
 // data: both OAuth providers and email authentication settings in one request
 // This is a public endpoint that doesn't require authentication
@@ -301,7 +301,7 @@ await insforge.auth.getPublicAuthConfig();
 ### `resendVerificationEmail()`
 
 ```javascript
-await insforge.auth.resendVerificationEmail({
+await yarah.auth.resendVerificationEmail({
   email: 'user@example.com',
   redirectTo: 'http://localhost:3000/sign-in', // optional, recommended for link-based verification
 });
@@ -311,7 +311,7 @@ await insforge.auth.resendVerificationEmail({
 ### `verifyEmail()`
 
 ```javascript
-await insforge.auth.verifyEmail({
+await yarah.auth.verifyEmail({
   email: 'user@example.com',
   otp: '123456',
 });
@@ -319,15 +319,15 @@ await insforge.auth.verifyEmail({
 // POST /api/auth/email/verify is code-only
 // Browser link verification uses GET /api/auth/email/verify-link
 // Verification redirect params:
-// - insforge_status=success|error
-// - insforge_type=verify_email
-// - insforge_error (only on error)
+// - yarah_status=success|error
+// - yarah_type=verify_email
+// - yarah_error (only on error)
 ```
 
 ### `sendResetPasswordEmail()`
 
 ```javascript
-await insforge.auth.sendResetPasswordEmail({
+await yarah.auth.sendResetPasswordEmail({
   email: 'user@example.com',
   redirectTo: 'http://localhost:3000/reset-password', // optional, recommended for link-based reset
 });
@@ -337,7 +337,7 @@ await insforge.auth.sendResetPasswordEmail({
 ### `exchangeResetPasswordToken()`
 
 ```javascript
-await insforge.auth.exchangeResetPasswordToken({
+await yarah.auth.exchangeResetPasswordToken({
   email: 'user@example.com',
   code: '123456',
 });
@@ -347,7 +347,7 @@ await insforge.auth.exchangeResetPasswordToken({
 ### `resetPassword()`
 
 ```javascript
-await insforge.auth.resetPassword({
+await yarah.auth.resetPassword({
   newPassword: 'newSecurePassword123',
   otp: 'reset-token',
 });
@@ -356,14 +356,14 @@ await insforge.auth.resetPassword({
 // then your app submits the new password with POST /api/auth/email/reset-password.
 // Reset redirect params:
 // - token (present only when ready)
-// - insforge_status=ready|error
-// - insforge_type=reset_password
-// - insforge_error (only on error)
+// - yarah_status=ready|error
+// - yarah_type=reset_password
+// - yarah_error (only on error)
 ```
 
 ## Error Handling
 
-### Auth/Storage/AI Errors (InsForgeError)
+### Auth/Storage/AI Errors (YarahError)
 
 ```javascript
 {
@@ -401,7 +401,7 @@ Payments methods are provider-scoped and intended for generated app frontends. T
 ### `stripe.createCheckoutSession()`
 
 ```javascript
-const { data, error } = await insforge.payments.stripe.createCheckoutSession('test', {
+const { data, error } = await yarah.payments.stripe.createCheckoutSession('test', {
   mode: 'payment',
   lineItems: [{ priceId: 'price_123', quantity: 1 }],
   successUrl: 'https://example.com/success',
@@ -417,7 +417,7 @@ if (!error && data?.checkoutSession.url) {
 For one-time payments, `subject` is optional. For subscription checkout, `subject` is required because subscriptions represent ongoing entitlement for an app-defined billing owner.
 
 ```javascript
-await insforge.payments.stripe.createCheckoutSession('test', {
+await yarah.payments.stripe.createCheckoutSession('test', {
   mode: 'subscription',
   subject: { type: 'team', id: 'team_123' },
   lineItems: [{ priceId: 'price_monthly_123', quantity: 1 }],
@@ -429,7 +429,7 @@ await insforge.payments.stripe.createCheckoutSession('test', {
 ### `stripe.createCustomerPortalSession()`
 
 ```javascript
-const { data, error } = await insforge.payments.stripe.createCustomerPortalSession('test', {
+const { data, error } = await yarah.payments.stripe.createCustomerPortalSession('test', {
   subject: { type: 'team', id: 'team_123' },
   returnUrl: 'https://example.com/billing',
 });
@@ -443,10 +443,10 @@ Customer portal sessions require an authenticated user and an existing Stripe cu
 
 ### `razorpay.createOrder()`
 
-Razorpay uses Checkout.js instead of a hosted redirect URL. Create an order through InsForge, pass `checkoutOptions` into Razorpay Checkout.js, then verify the signed payment response.
+Razorpay uses Checkout.js instead of a hosted redirect URL. Create an order through Yarah, pass `checkoutOptions` into Razorpay Checkout.js, then verify the signed payment response.
 
 ```javascript
-const { data, error } = await insforge.payments.razorpay.createOrder('test', {
+const { data, error } = await yarah.payments.razorpay.createOrder('test', {
   amount: 200000,
   currency: 'INR',
   receipt: 'cart_123',
@@ -459,7 +459,7 @@ if (!error && data) {
   const checkout = new Razorpay({
     ...data.checkoutOptions,
     handler: async (response) => {
-      await insforge.payments.razorpay.verifyOrder('test', {
+      await yarah.payments.razorpay.verifyOrder('test', {
         orderId: response.razorpay_order_id,
         paymentId: response.razorpay_payment_id,
         signature: response.razorpay_signature,
@@ -474,7 +474,7 @@ if (!error && data) {
 ### `razorpay.createSubscription()`
 
 ```javascript
-const { data, error } = await insforge.payments.razorpay.createSubscription('test', {
+const { data, error } = await yarah.payments.razorpay.createSubscription('test', {
   planId: 'plan_123',
   totalCount: 12,
   subject: { type: 'team', id: 'team_123' },
@@ -486,7 +486,7 @@ if (!error && data) {
   const checkout = new Razorpay({
     ...data.checkoutOptions,
     handler: async (response) => {
-      await insforge.payments.razorpay.verifySubscription('test', {
+      await yarah.payments.razorpay.verifySubscription('test', {
         subscriptionId: response.razorpay_subscription_id,
         paymentId: response.razorpay_payment_id,
         signature: response.razorpay_signature,
@@ -501,7 +501,7 @@ if (!error && data) {
 ### `razorpay.cancelSubscription()`
 
 ```javascript
-await insforge.payments.razorpay.cancelSubscription('test', 'sub_123', {
+await yarah.payments.razorpay.cancelSubscription('test', 'sub_123', {
   cancelAtCycleEnd: false,
 });
 ```
@@ -509,11 +509,11 @@ await insforge.payments.razorpay.cancelSubscription('test', 'sub_123', {
 ### `razorpay.pauseSubscription()` / `razorpay.resumeSubscription()`
 
 ```javascript
-await insforge.payments.razorpay.pauseSubscription('test', 'sub_123');
-await insforge.payments.razorpay.resumeSubscription('test', 'sub_123');
+await yarah.payments.razorpay.pauseSubscription('test', 'sub_123');
+await yarah.payments.razorpay.resumeSubscription('test', 'sub_123');
 ```
 
-Razorpay webhook setup is manual in the Razorpay dashboard. Configure keys and copy the webhook URL, secret, and recommended events from the InsForge payments settings UI.
+Razorpay webhook setup is manual in the Razorpay dashboard. Configure keys and copy the webhook URL, secret, and recommended events from the Yarah payments settings UI.
 
 ## Database Methods
 
@@ -524,7 +524,7 @@ Razorpay webhook setup is manual in the Razorpay dashboard. Configure keys and c
 Create a query builder for a table:
 
 ```javascript
-const query = insforge.database.from('posts');
+const query = yarah.database.from('posts');
 // Returns a PostgREST query builder with all Supabase features
 ```
 
@@ -532,13 +532,13 @@ const query = insforge.database.from('posts');
 
 ```javascript
 // Basic select
-await insforge.database.from('posts').select(); // Default: '*'
+await yarah.database.from('posts').select(); // Default: '*'
 
 // Select specific columns
-await insforge.database.from('posts').select('id, title, created_at');
+await yarah.database.from('posts').select('id, title, created_at');
 
 // With filters
-await insforge.database
+await yarah.database
   .from('posts')
   .select()
   .eq('user_id', '123')
@@ -546,13 +546,13 @@ await insforge.database
   .limit(10);
 
 // With joins (PostgREST syntax)
-await insforge.database.from('posts').select('*, users!inner(*)'); // Inner join with users table
+await yarah.database.from('posts').select('*, users!inner(*)'); // Inner join with users table
 
 // Join with specific columns
-await insforge.database.from('posts').select('id, title, users(nickname, avatar_url)');
+await yarah.database.from('posts').select('id, title, users(nickname, avatar_url)');
 
 // Aliased joins
-await insforge.database.from('posts').select('*, author:users(*)'); // Alias users as author
+await yarah.database.from('posts').select('*, author:users(*)'); // Alias users as author
 // Response: { data: [...], error }
 ```
 
@@ -560,10 +560,10 @@ await insforge.database.from('posts').select('*, author:users(*)'); // Alias use
 
 ```javascript
 // Single record - use .select() to return inserted data
-await insforge.database.from('posts').insert({ title: 'Hello', content: 'World' }).select();
+await yarah.database.from('posts').insert({ title: 'Hello', content: 'World' }).select();
 
 // Multiple records
-await insforge.database
+await yarah.database
   .from('posts')
   .insert([
     { title: 'Post 1', content: 'Content 1' },
@@ -572,7 +572,7 @@ await insforge.database
   .select();
 
 // Upsert
-await insforge.database.from('posts').upsert({ id: '123', title: 'Updated or New' }).select();
+await yarah.database.from('posts').upsert({ id: '123', title: 'Updated or New' }).select();
 // Response: { data: [...], error }
 
 // Note: Without .select(), mutations return { data: null, error }
@@ -581,14 +581,14 @@ await insforge.database.from('posts').upsert({ id: '123', title: 'Updated or New
 ### UPDATE Operations
 
 ```javascript
-await insforge.database.from('posts').update({ title: 'Updated Title' }).eq('id', '123').select();
+await yarah.database.from('posts').update({ title: 'Updated Title' }).eq('id', '123').select();
 // Response: { data: [...], error }
 ```
 
 ### DELETE Operations
 
 ```javascript
-await insforge.database.from('posts').delete().eq('id', '123').select();
+await yarah.database.from('posts').delete().eq('id', '123').select();
 // Response: { data: [...], error }
 ```
 
@@ -616,21 +616,21 @@ await insforge.database.from('posts').delete().eq('id', '123').select();
 
 ```javascript
 // Simple OR: status = 'active' OR status = 'pending'
-await insforge.database.from('posts').select().or('status.eq.active,status.eq.pending');
+await yarah.database.from('posts').select().or('status.eq.active,status.eq.pending');
 
 // OR with other filters (implicit AND)
-await insforge.database
+await yarah.database
   .from('posts')
   .select()
   .eq('user_id', '123') // AND
   .or('status.eq.draft,status.eq.published'); // OR
 
 // Complex OR with NOT
-await insforge.database.from('users').select().or('age.lt.18,age.gt.65');
+await yarah.database.from('users').select().or('age.lt.18,age.gt.65');
 // age < 18 OR age > 65
 
 // Combining AND and OR
-await insforge.database
+await yarah.database
   .from('products')
   .select()
   .eq('category', 'electronics')
@@ -655,12 +655,12 @@ Use with `select()` to get counts:
 
 ```javascript
 // Get exact count with data
-const { data, count, error } = await insforge.database
+const { data, count, error } = await yarah.database
   .from('posts')
   .select('*', { count: 'exact' });
 
 // Get count without data (HEAD request)
-const { count, error } = await insforge.database
+const { count, error } = await yarah.database
   .from('posts')
   .select('*', { count: 'exact', head: true });
 
@@ -675,7 +675,7 @@ const { count, error } = await insforge.database
 All methods return the query builder for chaining:
 
 ```javascript
-const { data, error } = await insforge.database
+const { data, error } = await yarah.database
   .from('posts')
   .select('id, title, content')
   .eq('status', 'published')
@@ -684,7 +684,7 @@ const { data, error } = await insforge.database
   .limit(10);
 
 // With count (Supabase-style)
-const { data, error, count } = await insforge.database
+const { data, error, count } = await yarah.database
   .from('posts')
   .select('*', { count: 'exact' }) // Request exact count
   .eq('status', 'published')
@@ -692,7 +692,7 @@ const { data, error, count } = await insforge.database
 // Returns: data (array), error (PostgrestError), count (number)
 
 // Count without data (head request)
-const { count, error } = await insforge.database
+const { count, error } = await yarah.database
   .from('posts')
   .select('*', { count: 'exact', head: true })
   .eq('status', 'published');
@@ -704,7 +704,7 @@ const { count, error } = await insforge.database
 ### `storage.from()`
 
 ```javascript
-const bucket = insforge.storage.from('avatars');
+const bucket = yarah.storage.from('avatars');
 // Returns StorageBucket instance for file operations
 ```
 
@@ -769,7 +769,7 @@ Create AI chat completions with support for both streaming and non-streaming res
 #### Non-Streaming
 
 ```javascript
-const completion = await insforge.ai.chat.completions.create({
+const completion = await yarah.ai.chat.completions.create({
   model: 'anthropic/claude-3.5-haiku',
   messages: [
     { role: 'system', content: 'You are a helpful assistant' },
@@ -789,7 +789,7 @@ console.log(completion.choices[0].message.content);
 
 ```javascript
 // Returns an async iterable of OpenAI-like chunks for real-time streaming
-const stream = await insforge.ai.chat.completions.create({
+const stream = await yarah.ai.chat.completions.create({
   model: 'anthropic/claude-3.5-haiku',
   messages: [{ role: 'user', content: 'Tell me a story' }],
   stream: true,
@@ -819,7 +819,7 @@ Generate images using AI models.
 
 ```javascript
 // Text-to-image
-const image = await insforge.ai.images.generate({
+const image = await yarah.ai.images.generate({
   model: 'google/gemini-3-pro-image-preview',
   prompt: 'A serene landscape with mountains at sunset',
 });
@@ -830,7 +830,7 @@ const image = await insforge.ai.images.generate({
 const base64Png = image.data[0].b64_json;
 
 // Image-to-image — pass source images as URLs or base64 data URIs
-const edited = await insforge.ai.images.generate({
+const edited = await yarah.ai.images.generate({
   model: 'google/gemini-3-pro-image-preview',
   prompt: 'Turn this into a watercolor painting',
   images: [{ url: 'https://example.com/input.jpg' }],
@@ -850,7 +850,7 @@ const edited = await insforge.ai.images.generate({
 Create embeddings for one or more text inputs.
 
 ```javascript
-const embeddings = await insforge.ai.embeddings.create({
+const embeddings = await yarah.ai.embeddings.create({
   model: 'openai/text-embedding-3-small',
   input: 'Hello world', // or string[] for batch input
 });
@@ -871,21 +871,21 @@ console.log(embeddings.data[0].embedding);
 ### Complete AI Example
 
 ```javascript
-import { createClient } from '@insforge/sdk';
+import { createClient } from '@yarahdev/sdk';
 
-const insforge = createClient({
+const yarah = createClient({
   baseUrl: 'http://localhost:7130',
 });
 
 // Chat completion
-const chat = await insforge.ai.chat.completions.create({
+const chat = await yarah.ai.chat.completions.create({
   model: 'anthropic/claude-3.5-haiku',
   messages: [{ role: 'user', content: 'What is the capital of France?' }],
 });
 console.log(chat.choices[0].message.content); // "The capital of France is Paris."
 
 // Streaming chat
-const stream = await insforge.ai.chat.completions.create({
+const stream = await yarah.ai.chat.completions.create({
   model: 'anthropic/claude-3.5-haiku',
   messages: [{ role: 'user', content: 'Write a haiku about coding' }],
   stream: true,
@@ -901,21 +901,21 @@ for await (const chunk of stream) {
 }
 
 // Image generation
-const image = await insforge.ai.images.generate({
+const image = await yarah.ai.images.generate({
   model: 'google/gemini-3-pro-image-preview',
   prompt: 'A futuristic city with flying cars',
 });
 const base64Png = image.data[0].b64_json; // base64-encoded image
 
 // Embeddings
-const embeddings = await insforge.ai.embeddings.create({
+const embeddings = await yarah.ai.embeddings.create({
   model: 'openai/text-embedding-3-small',
   input: 'Vectorize this sentence',
 });
 console.log(embeddings.data[0].embedding); // number[]
 ```
 
-## Types (from @insforge/shared-schemas)
+## Types (from @yarahdev/shared-schemas)
 
 ```typescript
 import type {
@@ -928,18 +928,18 @@ import type {
   ListObjectsResponseSchema,
   PublicOAuthProvider,
   GetPublicEmailAuthConfigResponse,
-} from '@insforge/shared-schemas';
+} from '@yarahdev/shared-schemas';
 
 // Database response type
 interface DatabaseResponse<T> {
   data: T | null;
-  error: InsForgeError | null;
+  error: YarahError | null;
   count?: number;
 }
 
 // Storage response type
 interface StorageResponse<T> {
   data: T | null;
-  error: InsForgeError | null;
+  error: YarahError | null;
 }
 ```

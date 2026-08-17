@@ -1,9 +1,9 @@
-# insforge-sdk-js
+# yarah-sdk-js
 
-[![npm version](https://img.shields.io/npm/v/@insforge/sdk.svg)](https://www.npmjs.com/package/@insforge/sdk)
+[![npm version](https://img.shields.io/npm/v/@yarahdev/sdk.svg)](https://www.npmjs.com/package/@yarahdev/sdk)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Official TypeScript/JavaScript SDK for [InsForge](https://github.com/InsForge/InsForge) - A powerful, open-source Backend-as-a-Service (BaaS) platform.
+Official TypeScript/JavaScript SDK for [Yarah](https://github.com/Yarah/Yarah) - A powerful, open-source Backend-as-a-Service (BaaS) platform.
 
 ## Features
 
@@ -19,13 +19,13 @@ Official TypeScript/JavaScript SDK for [InsForge](https://github.com/InsForge/In
 ## Installation
 
 ```bash
-npm install @insforge/sdk
+npm install @yarahdev/sdk
 ```
 
 Or with yarn:
 
 ```bash
-yarn add @insforge/sdk
+yarn add @yarahdev/sdk
 ```
 
 ## Quick Start
@@ -33,10 +33,10 @@ yarn add @insforge/sdk
 ### Initialize the Client
 
 ```javascript
-import { createClient } from '@insforge/sdk';
+import { createClient } from '@yarahdev/sdk';
 
-const insforge = createClient({
-  baseUrl: 'http://localhost:7130', // Your InsForge backend URL
+const yarah = createClient({
+  baseUrl: 'http://localhost:7130', // Your Yarah backend URL
   anonKey: 'your-anon-key', // Optional public anon key
 });
 ```
@@ -46,11 +46,11 @@ const insforge = createClient({
 Use `createAdminClient()` only in trusted server code that needs project-admin privileges:
 
 ```typescript
-import { createAdminClient } from '@insforge/sdk';
+import { createAdminClient } from '@yarahdev/sdk';
 
 const admin = createAdminClient({
   baseUrl: 'http://localhost:7130',
-  apiKey: process.env.INSFORGE_API_KEY!,
+  apiKey: process.env.YARAH_API_KEY!,
 });
 ```
 
@@ -61,7 +61,7 @@ const admin = createAdminClient({
 In edge functions or other server code that receives a user's JWT, seed the client with it via `accessToken`:
 
 ```javascript
-const insforge = createClient({
+const yarah = createClient({
   baseUrl: 'http://localhost:7130',
   accessToken: userJwt, // e.g. from the request's Authorization header
 });
@@ -73,7 +73,7 @@ All requests run as that user (RLS applies). The token is used as-is — the SDK
 
 ```javascript
 // Sign up a new user
-const { data, error } = await insforge.auth.signUp({
+const { data, error } = await yarah.auth.signUp({
   email: 'user@example.com',
   password: 'securePassword123',
   name: 'John Doe', // optional
@@ -81,66 +81,66 @@ const { data, error } = await insforge.auth.signUp({
 });
 
 // Sign in with email/password
-const { data, error } = await insforge.auth.signInWithPassword({
+const { data, error } = await yarah.auth.signInWithPassword({
   email: 'user@example.com',
   password: 'securePassword123',
 });
 
 // OAuth authentication (built-in or custom provider key)
-await insforge.auth.signInWithOAuth('google', {
+await yarah.auth.signInWithOAuth('google', {
   redirectTo: 'http://localhost:3000/dashboard',
   additionalParams: { prompt: 'select_account' },
 });
 // additionalParams is for provider-specific hints only.
 // Do not pass client_id, scope, redirect_uri, code_challenge, state, or response_type;
-// InsForge sets server-owned OAuth fields and ignores colliding client-provided keys.
+// Yarah sets server-owned OAuth fields and ignores colliding client-provided keys.
 
 // Get current user (call this during browser app startup)
-const { data: currentUser } = await insforge.auth.getCurrentUser();
+const { data: currentUser } = await yarah.auth.getCurrentUser();
 
 // Get any user's profile by ID (public endpoint)
-const { data: profile, error } = await insforge.auth.getProfile('user-id-here');
+const { data: profile, error } = await yarah.auth.getProfile('user-id-here');
 
 // Update current user's profile (requires authentication)
-const { data: updatedProfile, error } = await insforge.auth.setProfile({
+const { data: updatedProfile, error } = await yarah.auth.setProfile({
   displayName: 'John Doe',
   bio: 'Software developer',
   avatarUrl: 'https://example.com/avatar.jpg',
 });
 
 // Sign out
-await insforge.auth.signOut();
+await yarah.auth.signOut();
 ```
 
 ### Email Verification And Password Reset
 
 ```javascript
 // Resend a verification email
-await insforge.auth.resendVerificationEmail({
+await yarah.auth.resendVerificationEmail({
   email: 'user@example.com',
   redirectTo: 'http://localhost:3000/sign-in', // optional, recommended for link-based verification
 });
 
 // Verify email with a 6-digit code
-await insforge.auth.verifyEmail({
+await yarah.auth.verifyEmail({
   email: 'user@example.com',
   otp: '123456',
 });
 
 // Send password reset email
-await insforge.auth.sendResetPasswordEmail({
+await yarah.auth.sendResetPasswordEmail({
   email: 'user@example.com',
   redirectTo: 'http://localhost:3000/reset-password', // optional, recommended for link-based reset
 });
 
 // Code-based reset flow: exchange the code, then reset the password
-const { data: resetToken } = await insforge.auth.exchangeResetPasswordToken({
+const { data: resetToken } = await yarah.auth.exchangeResetPasswordToken({
   email: 'user@example.com',
   code: '123456',
 });
 
 if (resetToken) {
-  await insforge.auth.resetPassword({
+  await yarah.auth.resetPassword({
     newPassword: 'newSecurePassword123',
     otp: resetToken.token,
   });
@@ -154,29 +154,29 @@ For link-based verification and password reset, users click the emailed browser 
 
 Those backend endpoints validate the token first, then redirect the browser to your `redirectTo` URL.
 
-- Verification links redirect with `insforge_status=success|error`, `insforge_type=verify_email`, and optional `insforge_error`
+- Verification links redirect with `yarah_status=success|error`, `yarah_type=verify_email`, and optional `yarah_error`
 - Recommended: use your sign-in page as the verification `redirectTo`, then show a confirmation message and ask the user to sign in with email and password
-- Reset links redirect with `token` when ready, plus `insforge_status=ready|error`, `insforge_type=reset_password`, and optional `insforge_error`
+- Reset links redirect with `token` when ready, plus `yarah_status=ready|error`, `yarah_type=reset_password`, and optional `yarah_error`
 
 ### Database Operations
 
 ```javascript
 // Insert data
-const { data, error } = await insforge.database
+const { data, error } = await yarah.database
   .from('posts')
   .insert([{ title: 'My First Post', content: 'Hello World!' }]);
 
 // Query data
-const { data, error } = await insforge.database.from('posts').select('*').eq('author_id', userId);
+const { data, error } = await yarah.database.from('posts').select('*').eq('author_id', userId);
 
 // Update data
-const { data, error } = await insforge.database
+const { data, error } = await yarah.database
   .from('posts')
   .update({ title: 'Updated Title' })
   .eq('id', postId);
 
 // Delete data
-const { data, error } = await insforge.database.from('posts').delete().eq('id', postId);
+const { data, error } = await yarah.database.from('posts').delete().eq('id', postId);
 ```
 
 #### Selecting a schema
@@ -184,15 +184,15 @@ const { data, error } = await insforge.database.from('posts').delete().eq('id', 
 Queries hit the `public` schema by default. Target a custom schema by chaining `.schema()` — the table name stays bare (it maps to PostgREST's `Accept-Profile`/`Content-Profile` header):
 
 ```javascript
-const { data } = await insforge.database.schema('analytics').from('events').select('*');
+const { data } = await yarah.database.schema('analytics').from('events').select('*');
 
-await insforge.database.schema('analytics').rpc('rollup', { day: '2026-01-01' });
+await yarah.database.schema('analytics').rpc('rollup', { day: '2026-01-01' });
 ```
 
 Or set a default schema for every query when creating the client:
 
 ```javascript
-const insforge = createClient({
+const yarah = createClient({
   baseUrl: '...',
   anonKey: '...',
   db: { schema: 'analytics' },
@@ -206,29 +206,29 @@ The schema must be exposed by the backend, and access is still gated by grants +
 ```javascript
 // Upload a file
 const file = document.querySelector('input[type="file"]').files[0];
-const { data, error } = await insforge.storage.from('avatars').upload(file);
+const { data, error } = await yarah.storage.from('avatars').upload(file);
 
 // Download a file
-const { data, error } = await insforge.storage.from('avatars').download('user-avatar.png');
+const { data, error } = await yarah.storage.from('avatars').download('user-avatar.png');
 
 // Delete a file
-const { data, error } = await insforge.storage.from('avatars').remove('user-avatar.png');
+const { data, error } = await yarah.storage.from('avatars').remove('user-avatar.png');
 
 // Delete multiple files (maximum 1000 keys)
-const { data, error } = await insforge.storage
+const { data, error } = await yarah.storage
   .from('avatars')
   .remove(['user-avatar.png', 'old-avatar.png']);
 // data: { results: [{ key, status: 'deleted' | 'notFound' | 'failed', message? }] }
 
 // List files
-const { data, error } = await insforge.storage.from('avatars').list();
+const { data, error } = await yarah.storage.from('avatars').list();
 ```
 
 ### Edge Functions
 
 ```javascript
 // Invoke an edge function
-const { data, error } = await insforge.functions.invoke('my-function', {
+const { data, error } = await yarah.functions.invoke('my-function', {
   body: { key: 'value' },
 });
 ```
@@ -237,7 +237,7 @@ const { data, error } = await insforge.functions.invoke('my-function', {
 
 ```javascript
 // Create and redirect to a Stripe Checkout Session
-const { data, error } = await insforge.payments.stripe.createCheckoutSession('test', {
+const { data, error } = await yarah.payments.stripe.createCheckoutSession('test', {
   mode: 'payment',
   lineItems: [{ priceId: 'price_123', quantity: 1 }],
   successUrl: `${window.location.origin}/success`,
@@ -250,7 +250,7 @@ if (!error && data?.checkoutSession.url) {
 }
 
 // Create a subscription checkout for an app billing subject
-const { data: subscriptionCheckout } = await insforge.payments.stripe.createCheckoutSession(
+const { data: subscriptionCheckout } = await yarah.payments.stripe.createCheckoutSession(
   'test',
   {
     mode: 'subscription',
@@ -266,7 +266,7 @@ if (subscriptionCheckout?.checkoutSession.url) {
 }
 
 // Let an authenticated customer manage their subscription in Stripe Billing Portal
-const { data: portal } = await insforge.payments.stripe.createCustomerPortalSession('test', {
+const { data: portal } = await yarah.payments.stripe.createCustomerPortalSession('test', {
   subject: { type: 'team', id: 'team_123' },
   returnUrl: `${window.location.origin}/billing`,
 });
@@ -276,7 +276,7 @@ if (portal?.customerPortalSession.url) {
 }
 
 // Create a Razorpay order, then pass checkoutOptions to Razorpay Checkout.js
-const { data: order } = await insforge.payments.razorpay.createOrder('test', {
+const { data: order } = await yarah.payments.razorpay.createOrder('test', {
   amount: 200000,
   currency: 'INR',
   subject: { type: 'team', id: 'team_123' },
@@ -288,7 +288,7 @@ if (order) {
   const checkout = new Razorpay({
     ...order.checkoutOptions,
     handler: async (response) => {
-      await insforge.payments.razorpay.verifyOrder('test', {
+      await yarah.payments.razorpay.verifyOrder('test', {
         orderId: response.razorpay_order_id,
         paymentId: response.razorpay_payment_id,
         signature: response.razorpay_signature,
@@ -299,7 +299,7 @@ if (order) {
 }
 
 // Create a Razorpay subscription checkout for an app billing subject
-const { data: subscription } = await insforge.payments.razorpay.createSubscription('test', {
+const { data: subscription } = await yarah.payments.razorpay.createSubscription('test', {
   planId: 'plan_123',
   totalCount: 12,
   subject: { type: 'team', id: 'team_123' },
@@ -313,14 +313,14 @@ AI methods return an OpenAI-like response object directly (not the `{ data, erro
 
 ```javascript
 // Chat completion
-const completion = await insforge.ai.chat.completions.create({
+const completion = await yarah.ai.chat.completions.create({
   model: 'anthropic/claude-3.5-haiku',
   messages: [{ role: 'user', content: 'Write a hello world program' }],
 });
 console.log(completion.choices[0].message.content);
 
 // Streaming chat — returns an async iterable of chunks
-const stream = await insforge.ai.chat.completions.create({
+const stream = await yarah.ai.chat.completions.create({
   model: 'anthropic/claude-3.5-haiku',
   messages: [{ role: 'user', content: 'Tell me a story' }],
   stream: true,
@@ -330,14 +330,14 @@ for await (const chunk of stream) {
 }
 
 // Generate an image — returns base64-encoded image data
-const image = await insforge.ai.images.generate({
+const image = await yarah.ai.images.generate({
   model: 'google/gemini-3-pro-image-preview',
   prompt: 'A sunset over mountains',
 });
 const base64Png = image.data[0].b64_json;
 
 // Create embeddings
-const embeddings = await insforge.ai.embeddings.create({
+const embeddings = await yarah.ai.embeddings.create({
   model: 'openai/text-embedding-3-small',
   input: 'Hello world',
 });
@@ -349,15 +349,15 @@ console.log(embeddings.data[0].embedding); // number[]
 For complete API reference and advanced usage, see:
 
 - **[SDK Reference](./SDK-REFERENCE.md)** - Complete API documentation
-- **[InsForge Main Repository](https://github.com/InsForge/InsForge)** - Backend platform and setup guides
+- **[Yarah Main Repository](https://github.com/Yarah/Yarah)** - Backend platform and setup guides
 
 ## Configuration
 
 The SDK supports the following configuration options:
 
 ```javascript
-const insforge = createClient({
-  baseUrl: 'http://localhost:7130', // Your InsForge backend URL
+const yarah = createClient({
+  baseUrl: 'http://localhost:7130', // Your Yarah backend URL
   anonKey: 'your-anon-key', // Optional
 });
 ```
@@ -366,19 +366,19 @@ For project-admin keys, use `createAdminClient({ apiKey })` in server-only code.
 
 ### SSR / Next.js
 
-Use `@insforge/sdk/ssr` for apps that need the same auth session in Server Components, Client Components, Storage, and Realtime.
-The helper uses explicit `baseUrl` / `anonKey` when provided. Otherwise it reads `NEXT_PUBLIC_INSFORGE_URL` / `NEXT_PUBLIC_INSFORGE_ANON_KEY`. Missing config throws a clear error.
+Use `@yarahdev/sdk/ssr` for apps that need the same auth session in Server Components, Client Components, Storage, and Realtime.
+The helper uses explicit `baseUrl` / `anonKey` when provided. Otherwise it reads `NEXT_PUBLIC_YARAH_URL` / `NEXT_PUBLIC_YARAH_ANON_KEY`. Missing config throws a clear error.
 
 By default, the SSR helpers use:
 
-- `insforge_access_token`: browser-readable access token cookie, expires at the JWT `exp`
-- `insforge_refresh_token`: httpOnly refresh token cookie, expires at the JWT `exp`
+- `yarah_access_token`: browser-readable access token cookie, expires at the JWT `exp`
+- `yarah_refresh_token`: httpOnly refresh token cookie, expires at the JWT `exp`
 
 ```typescript
-// app/lib/insforge/client.ts
-import { createBrowserClient } from '@insforge/sdk/ssr';
+// app/lib/yarah/client.ts
+import { createBrowserClient } from '@yarahdev/sdk/ssr';
 
-export const insforge = createBrowserClient();
+export const yarah = createBrowserClient();
 ```
 
 `createBrowserClient()` is for Client Components that consume an existing SSR
@@ -387,18 +387,18 @@ session. Its TypeScript surface does not include auth mutations such as
 server so the app can write server-owned auth cookies.
 
 ```typescript
-// app/lib/insforge/server.ts
+// app/lib/yarah/server.ts
 import { cookies } from 'next/headers';
-import { createServerClient } from '@insforge/sdk/ssr';
+import { createServerClient } from '@yarahdev/sdk/ssr';
 
-export async function createInsForgeServerClient() {
+export async function createYarahServerClient() {
   return createServerClient({ cookies: await cookies() });
 }
 ```
 
 ```typescript
 // app/api/auth/refresh/route.ts
-import { createRefreshAuthRouter } from '@insforge/sdk/ssr';
+import { createRefreshAuthRouter } from '@yarahdev/sdk/ssr';
 
 export const { POST } = createRefreshAuthRouter();
 ```
@@ -413,7 +413,7 @@ so access and refresh tokens stay server-owned.
 'use server';
 
 import { cookies } from 'next/headers';
-import { createAuthActions } from '@insforge/sdk/ssr';
+import { createAuthActions } from '@yarahdev/sdk/ssr';
 
 export async function signIn(formData: FormData) {
   const auth = createAuthActions({ cookies: await cookies() });
@@ -437,7 +437,7 @@ verifier in an httpOnly app cookie and exchange the callback code with
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { createAuthActions } from '@insforge/sdk/ssr';
+import { createAuthActions } from '@yarahdev/sdk/ssr';
 
 export async function signInWithGoogle() {
   const cookieStore = await cookies();
@@ -451,7 +451,7 @@ export async function signInWithGoogle() {
     throw new Error(error?.message ?? 'OAuth init failed');
   }
 
-  cookieStore.set('insforge_code_verifier', data.codeVerifier, {
+  cookieStore.set('yarah_code_verifier', data.codeVerifier, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -467,11 +467,11 @@ export async function signInWithGoogle() {
 // app/api/auth/callback/route.ts
 import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
-import { createAuthActions } from '@insforge/sdk/ssr';
+import { createAuthActions } from '@yarahdev/sdk/ssr';
 
 export async function GET(request: NextRequest) {
-  const code = request.nextUrl.searchParams.get('insforge_code');
-  const verifier = (await cookies()).get('insforge_code_verifier')?.value;
+  const code = request.nextUrl.searchParams.get('yarah_code');
+  const verifier = (await cookies()).get('yarah_code_verifier')?.value;
   if (!code || !verifier) {
     return NextResponse.redirect(new URL('/login?error=oauth', request.url));
   }
@@ -486,7 +486,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/login?error=oauth', request.url));
   }
 
-  response.cookies.delete('insforge_code_verifier');
+  response.cookies.delete('yarah_code_verifier');
   return response;
 }
 ```
@@ -501,7 +501,7 @@ response cookies for writing the next session:
 ```typescript
 // app/api/auth/sign-out/route.ts
 import { NextResponse, type NextRequest } from 'next/server';
-import { createAuthActions } from '@insforge/sdk/ssr';
+import { createAuthActions } from '@yarahdev/sdk/ssr';
 
 export async function POST(request: NextRequest) {
   const response = NextResponse.json({ ok: true });
@@ -525,7 +525,7 @@ export async function POST(request: NextRequest) {
 If your refresh route needs custom side effects:
 
 ```typescript
-import { refreshAuth } from '@insforge/sdk/ssr';
+import { refreshAuth } from '@yarahdev/sdk/ssr';
 
 export async function POST(request: Request) {
   const result = await refreshAuth({ request });
@@ -539,7 +539,7 @@ For Next.js Proxy/Middleware, refresh before Server Components render:
 ```typescript
 // proxy.ts on Next.js 16+, middleware.ts on Next.js 15 and earlier
 import { NextResponse, type NextRequest } from 'next/server';
-import { updateSession } from '@insforge/sdk/ssr/middleware';
+import { updateSession } from '@yarahdev/sdk/ssr/middleware';
 
 export async function proxy(request: NextRequest) {
   const response = NextResponse.next({ request });
@@ -561,14 +561,14 @@ the session refresh helpers and avoids bundling the full SDK client.
 The SDK is written in TypeScript and provides full type definitions:
 
 ```typescript
-import { createClient, InsForgeClient } from '@insforge/sdk';
+import { createClient, YarahClient } from '@yarahdev/sdk';
 
-const insforge: InsForgeClient = createClient({
+const yarah: YarahClient = createClient({
   baseUrl: 'http://localhost:7130',
 });
 
 // Type-safe API calls
-const response = await insforge.auth.getCurrentUser();
+const response = await yarah.auth.getCurrentUser();
 ```
 
 ## Error Handling
@@ -576,7 +576,7 @@ const response = await insforge.auth.getCurrentUser();
 All SDK methods return a consistent response format:
 
 ```javascript
-const { data, error } = await insforge.auth.signUp({...});
+const { data, error } = await yarah.auth.signUp({...});
 
 if (error) {
   console.error('Error:', error.message);
@@ -604,8 +604,8 @@ We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md)
 
 ```bash
 # Clone the repository
-git clone https://github.com/InsForge/insforge-sdk-js.git
-cd insforge-sdk-js
+git clone https://github.com/Darts7u7/Yarah-oos-sdk-js.git
+cd yarah-sdk-js
 
 # Install dependencies
 npm install
@@ -626,15 +626,15 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](./LICE
 
 ## Community & Support
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/InsForge/insforge-sdk-js/issues)
-- **Documentation**: [https://docs.insforge.com](https://docs.insforge.com)
-- **Main Repository**: [InsForge Backend Platform](https://github.com/InsForge/InsForge)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/Darts7u7/Yarah-oos-sdk-js/issues)
+- **Documentation**: [https://docs.yarah.com](https://docs.yarah.com)
+- **Main Repository**: [Yarah Backend Platform](https://github.com/Yarah/Yarah)
 
 ## Related Projects
 
-- **[InsForge](https://github.com/InsForge/InsForge)** - The main InsForge backend platform
-- **[InsForge MCP](https://github.com/InsForge/insforge-mcp)** - Model Context Protocol server for InsForge
+- **[Yarah](https://github.com/Yarah/Yarah)** - The main Yarah backend platform
+- **[Yarah MCP](https://github.com/Yarah/yarah-mcp)** - Model Context Protocol server for Yarah
 
 ---
 
-Built with ❤️ by the InsForge team
+Built with ❤️ by the Yarah team

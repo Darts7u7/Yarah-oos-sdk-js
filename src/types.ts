@@ -1,15 +1,15 @@
 /**
- * InsForge SDK Types - only SDK-specific types here
- * Use @insforge/shared-schemas directly for API types
+ * Yarah SDK Types - only SDK-specific types here
+ * Use @yarahdev/shared-schemas directly for API types
  */
 
-import type { ErrorCode, UserSchema } from '@insforge/shared-schemas';
+import type { ErrorCode, UserSchema } from '@yarahdev/shared-schemas';
 
-export type InsForgeErrorCode = ErrorCode | (string & {});
+export type YarahErrorCode = ErrorCode | (string & {});
 
-export interface InsForgeConfig {
+export interface YarahConfig {
   /**
-   * The base URL of the InsForge backend API
+   * The base URL of the Yarah backend API
    * @default "http://localhost:7130"
    */
   baseUrl?: string;
@@ -39,7 +39,7 @@ export interface InsForgeConfig {
    * Direct URL to Deno Subhosting functions (optional)
    * When provided, SDK will try this URL first for function invocations.
    * Falls back to proxy URL if subhosting returns 404.
-   * @example "https://{appKey}.function2.insforge.app"
+   * @example "https://{appKey}.functions.yarah.dev"
    */
   functionsUrl?: string;
 
@@ -53,7 +53,7 @@ export interface InsForgeConfig {
    * In this mode auth endpoints use `client_type=mobile` and refresh_token body flow.
    *
    * @deprecated Use `createServerClient()`, `createBrowserClient()`, and
-   * `updateSession()` from `@insforge/sdk/ssr` for SSR apps.
+   * `updateSession()` from `@yarahdev/sdk/ssr` for SSR apps.
    * @default false
    */
   isServerMode?: boolean;
@@ -123,8 +123,8 @@ export interface InsForgeConfig {
   retryDelay?: number;
 }
 
-export type InsForgeAdminConfig = Omit<
-  InsForgeConfig,
+export type YarahAdminConfig = Omit<
+  YarahConfig,
   'anonKey' | 'accessToken' | 'edgeFunctionToken' | 'isServerMode'
 > & {
   /**
@@ -147,27 +147,27 @@ export interface AuthRefreshResponse {
 }
 
 export interface ApiError {
-  error: InsForgeErrorCode;
+  error: YarahErrorCode;
   message: string;
   statusCode: number;
   nextActions?: string;
 }
 
-export class InsForgeError extends Error {
+export class YarahError extends Error {
   public statusCode: number;
-  public error: InsForgeErrorCode;
+  public error: YarahErrorCode;
   public nextActions?: string;
 
-  constructor(message: string, statusCode: number, error: InsForgeErrorCode, nextActions?: string) {
+  constructor(message: string, statusCode: number, error: YarahErrorCode, nextActions?: string) {
     super(message);
-    this.name = 'InsForgeError';
+    this.name = 'YarahError';
     this.statusCode = statusCode;
     this.error = error;
     this.nextActions = nextActions;
   }
 
-  static fromApiError(apiError: ApiError): InsForgeError {
-    return new InsForgeError(
+  static fromApiError(apiError: ApiError): YarahError {
+    return new YarahError(
       apiError.message,
       apiError.statusCode,
       apiError.error,

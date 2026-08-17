@@ -6,7 +6,7 @@ import type {
   RealtimeErrorPayload,
   SocketMessage,
   SubscribeResponse,
-} from '@insforge/shared-schemas';
+} from '@yarahdev/shared-schemas';
 import { AuthChangeEvent, TokenManager } from '../lib/token-manager';
 
 export type { PresenceMember, RealtimeErrorPayload, SocketMessage, SubscribeResponse };

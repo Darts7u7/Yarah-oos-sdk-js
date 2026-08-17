@@ -12,5 +12,5 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   minify: false,
-  external: ['@insforge/shared-schemas', 'socket.io-client'],
+  external: ['@yarahdev/shared-schemas', 'socket.io-client'],
 });

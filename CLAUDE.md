@@ -1,10 +1,10 @@
 ---
-description: InsForge SDK Publishing Guidelines
+description: Yarah SDK Publishing Guidelines
 globs:
 alwaysApply: true
 ---
 
-# InsForge SDK Publishing Rules
+# Yarah SDK Publishing Rules
 
 ## 🔴 Publishing Workflow
 
@@ -39,13 +39,13 @@ npm publish --tag dev
 
 ```bash
 # Specific dev version
-npm install @insforge/sdk@0.0.60-dev.5
+npm install @yarahdev/sdk@0.0.60-dev.5
 
 # Latest dev version
-npm install @insforge/sdk@dev
+npm install @yarahdev/sdk@dev
 
 # Regular install (unaffected by dev versions)
-npm install @insforge/sdk  # Gets latest stable
+npm install @yarahdev/sdk  # Gets latest stable
 ```
 
 ### For Production Release

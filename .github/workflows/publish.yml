@@ -66,7 +66,7 @@ jobs:
           }
 
           appendFileSync(process.env.GITHUB_OUTPUT, `dist_tag=${distTag}\n`);
-          console.log(`Validated @insforge/sdk@${packageVersion} for npm tag ${distTag}`);
+          console.log(`Validated @yarahdev/sdk@${packageVersion} for npm tag ${distTag}`);
           NODE
 
       - name: Verify stable release commit is in main

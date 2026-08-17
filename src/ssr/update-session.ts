@@ -1,5 +1,5 @@
 import { isJwtExpiredOrExpiring } from '../lib/jwt';
-import type { InsForgeConfig, InsForgeError } from '../types';
+import type { YarahConfig, YarahError } from '../types';
 import {
   clearAuthCookies,
   getAccessTokenCookieName,
@@ -13,7 +13,7 @@ import { refreshAuth } from './refresh';
 
 export interface UpdateSessionOptions
   extends
-    Omit<InsForgeConfig, 'accessToken' | 'edgeFunctionToken' | 'isServerMode' | 'auth'>,
+    Omit<YarahConfig, 'accessToken' | 'edgeFunctionToken' | 'isServerMode' | 'auth'>,
     AuthCookieSettings {
   requestCookies: CookieStore;
   responseCookies: CookieStore;
@@ -23,7 +23,7 @@ export interface UpdateSessionOptions
 export interface UpdateSessionResult {
   refreshed: boolean;
   accessToken: string | null;
-  error: InsForgeError | null;
+  error: YarahError | null;
 }
 
 export async function updateSession(options: UpdateSessionOptions): Promise<UpdateSessionResult> {

@@ -5,7 +5,7 @@ import prettierConfig from 'eslint-config-prettier';
 import prettierPlugin from 'eslint-plugin-prettier';
 import globals from 'globals';
 
-// Rules shared across the SDK. Kept intentionally aligned with the InsForge
+// Rules shared across the SDK. Kept intentionally aligned with the Yarah
 // OSS monorepo (backend) config so the two codebases feel the same, minus the
 // type-aware/React rules that don't apply to this standalone library.
 const sharedRules = {

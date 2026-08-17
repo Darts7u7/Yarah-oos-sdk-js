@@ -101,7 +101,7 @@ jobs:
           password: ${{ secrets.MAIL_PASSWORD }}
           subject: '[${{ github.repository }}] Coverage Report – ${{ github.sha }}'
           to: ${{ secrets.MAINTAINER_EMAIL }}
-          from: ${{ secrets.MAIL_FROM || 'CI Bot <ci@insforge.dev>' }}
+          from: ${{ secrets.MAIL_FROM || 'CI Bot <ci@yarah.dev>' }}
           body: |
             Coverage report for ${{ github.repository }}
             Commit: ${{ github.sha }}
@@ -129,7 +129,7 @@ jobs:
       - name: Run integration tests
         run: npm run test:integration:ci
         env:
-          INSFORGE_INTEGRATION_BASE_URL: ${{ vars.INSFORGE_INTEGRATION_BASE_URL }}
-          INSFORGE_INTEGRATION_ANON_KEY: ${{ secrets.INSFORGE_INTEGRATION_ANON_KEY }}
-          INSFORGE_INTEGRATION_TEST_EMAIL: ${{ secrets.INSFORGE_INTEGRATION_TEST_EMAIL }}
-          INSFORGE_INTEGRATION_TEST_PASSWORD: ${{ secrets.INSFORGE_INTEGRATION_TEST_PASSWORD }}
+          YARAH_INTEGRATION_BASE_URL: ${{ vars.YARAH_INTEGRATION_BASE_URL }}
+          YARAH_INTEGRATION_ANON_KEY: ${{ secrets.YARAH_INTEGRATION_ANON_KEY }}
+          YARAH_INTEGRATION_TEST_EMAIL: ${{ secrets.YARAH_INTEGRATION_TEST_EMAIL }}
+          YARAH_INTEGRATION_TEST_PASSWORD: ${{ secrets.YARAH_INTEGRATION_TEST_PASSWORD }}

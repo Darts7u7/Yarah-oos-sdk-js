@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ERROR_CODES } from '@insforge/shared-schemas';
+import { ERROR_CODES } from '@yarahdev/shared-schemas';
 import {
   accessTokenCookieOptions,
   clearAuthCookies,
@@ -86,7 +86,7 @@ class NextCookiesLike {
   }
 }
 
-describe('@insforge/sdk/ssr cookies', () => {
+describe('@yarahdev/sdk/ssr cookies', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
@@ -119,10 +119,10 @@ describe('@insforge/sdk/ssr cookies', () => {
 
     setAuthCookies(cookies, { accessToken, refreshToken });
 
-    expect(cookies.values.get('insforge_access_token')).toBe(accessToken);
-    expect(cookies.values.get('insforge_refresh_token')).toBe(refreshToken);
-    expect(cookies.options.get('insforge_access_token')?.httpOnly).toBe(false);
-    expect(cookies.options.get('insforge_refresh_token')?.httpOnly).toBe(true);
+    expect(cookies.values.get('yarah_access_token')).toBe(accessToken);
+    expect(cookies.values.get('yarah_refresh_token')).toBe(refreshToken);
+    expect(cookies.options.get('yarah_access_token')?.httpOnly).toBe(false);
+    expect(cookies.options.get('yarah_refresh_token')?.httpOnly).toBe(true);
   });
 
   it('clears auth cookies through a NextResponse-like cookie wrapper', () => {
@@ -130,9 +130,9 @@ describe('@insforge/sdk/ssr cookies', () => {
 
     clearAuthCookies(cookies);
 
-    expect(cookies.values.get('insforge_access_token')).toBe('');
-    expect(cookies.values.get('insforge_refresh_token')).toBe('');
-    expect(cookies.options.get('insforge_access_token')?.expires?.getTime()).toBe(0);
+    expect(cookies.values.get('yarah_access_token')).toBe('');
+    expect(cookies.values.get('yarah_refresh_token')).toBe('');
+    expect(cookies.options.get('yarah_access_token')?.expires?.getTime()).toBe(0);
   });
 
   it('keeps deletion expiry fields when clearing cookies with overrides', () => {
@@ -148,7 +148,7 @@ describe('@insforge/sdk/ssr cookies', () => {
       },
     });
 
-    expect(cookies.options.get('insforge_access_token')).toMatchObject({
+    expect(cookies.options.get('yarah_access_token')).toMatchObject({
       domain: 'app.test',
       expires: new Date(0),
       maxAge: 0,
@@ -157,11 +157,11 @@ describe('@insforge/sdk/ssr cookies', () => {
 
   it('creates a server client from the access-token cookie', () => {
     const token = jwtWithExp(Math.floor(Date.now() / 1000) + 3600);
-    const cookies = cookieStore({ insforge_access_token: token });
+    const cookies = cookieStore({ yarah_access_token: token });
 
     const client = createServerClient({
       cookies,
-      baseUrl: 'https://api.insforge.test',
+      baseUrl: 'https://api.yarah.test',
       anonKey: 'anon-key',
     });
 
@@ -171,11 +171,11 @@ describe('@insforge/sdk/ssr cookies', () => {
   it('creates a browser client from the access-token cookie', () => {
     const token = jwtWithExp(Math.floor(Date.now() / 1000) + 3600);
     vi.stubGlobal('document', {
-      cookie: `insforge_access_token=${encodeURIComponent(token)}`,
+      cookie: `yarah_access_token=${encodeURIComponent(token)}`,
     });
 
     const client = createBrowserClient({
-      baseUrl: 'https://api.insforge.test',
+      baseUrl: 'https://api.yarah.test',
       anonKey: 'anon-key',
       fetch: vi.fn() as any,
     });
@@ -197,13 +197,13 @@ describe('@insforge/sdk/ssr cookies', () => {
     });
 
     const client = createBrowserClient({
-      baseUrl: 'https://api.insforge.test',
+      baseUrl: 'https://api.yarah.test',
       anonKey: 'anon-key',
       fetch: fetch as any,
     });
     const result = await client.getHttpClient().get('/api/protected');
     const protectedCall = fetch.mock.calls.find(
-      ([url]: [string]) => url === 'https://api.insforge.test/api/protected'
+      ([url]: [string]) => url === 'https://api.yarah.test/api/protected'
     );
 
     expect(result).toMatchObject({ ok: true });
@@ -220,7 +220,7 @@ describe('@insforge/sdk/ssr cookies', () => {
     const oldAccessToken = jwtWithExp(Math.floor(Date.now() / 1000) + 3600);
     const freshAccessToken = jwtWithExp(Math.floor(Date.now() / 1000) + 900);
     vi.stubGlobal('document', {
-      cookie: `insforge_access_token=${encodeURIComponent(oldAccessToken)}`,
+      cookie: `yarah_access_token=${encodeURIComponent(oldAccessToken)}`,
     });
     let protectedAttempts = 0;
     const fetch = vi.fn(async (url: string) => {
@@ -243,13 +243,13 @@ describe('@insforge/sdk/ssr cookies', () => {
     });
 
     const client = createBrowserClient({
-      baseUrl: 'https://api.insforge.test',
+      baseUrl: 'https://api.yarah.test',
       anonKey: 'anon-key',
       fetch: fetch as any,
     });
     const result = await client.getHttpClient().get('/api/protected');
     const protectedCalls = fetch.mock.calls.filter(
-      ([url]: [string]) => url === 'https://api.insforge.test/api/protected'
+      ([url]: [string]) => url === 'https://api.yarah.test/api/protected'
     );
 
     expect(result).toEqual({ ok: true });
@@ -262,7 +262,7 @@ describe('@insforge/sdk/ssr cookies', () => {
     );
     expect(
       fetch.mock.calls.some(
-        ([url]: [string]) => url === 'https://api.insforge.test/api/auth/refresh'
+        ([url]: [string]) => url === 'https://api.yarah.test/api/auth/refresh'
       )
     ).toBe(false);
   });
@@ -270,7 +270,7 @@ describe('@insforge/sdk/ssr cookies', () => {
   it('detects the refresh route when the SSR fetch receives a Request input', async () => {
     const accessToken = jwtWithExp(Math.floor(Date.now() / 1000) + 3600);
     vi.stubGlobal('document', {
-      cookie: `insforge_access_token=${encodeURIComponent(accessToken)}`,
+      cookie: `yarah_access_token=${encodeURIComponent(accessToken)}`,
     });
     const fetch = vi.fn(async () =>
       jsonResponse(401, {
@@ -281,7 +281,7 @@ describe('@insforge/sdk/ssr cookies', () => {
     );
 
     const client = createBrowserClient({
-      baseUrl: 'https://api.insforge.test',
+      baseUrl: 'https://api.yarah.test',
       anonKey: 'anon-key',
       fetch: fetch as any,
     });
@@ -296,13 +296,13 @@ describe('@insforge/sdk/ssr cookies', () => {
   it('does not exchange OAuth callbacks during SSR browser client initialization', async () => {
     const accessToken = jwtWithExp(Math.floor(Date.now() / 1000) + 3600);
     vi.stubGlobal('document', {
-      cookie: `insforge_access_token=${encodeURIComponent(accessToken)}`,
+      cookie: `yarah_access_token=${encodeURIComponent(accessToken)}`,
       title: 'App',
     });
     vi.stubGlobal('window', {
       location: {
-        search: '?insforge_code=oauth-code',
-        href: 'https://app.test/callback?insforge_code=oauth-code',
+        search: '?yarah_code=oauth-code',
+        href: 'https://app.test/callback?yarah_code=oauth-code',
       },
       history: {
         replaceState: vi.fn(),
@@ -315,7 +315,7 @@ describe('@insforge/sdk/ssr cookies', () => {
     const fetch = vi.fn(async () => jsonResponse(200, { ok: true }));
 
     createBrowserClient({
-      baseUrl: 'https://api.insforge.test',
+      baseUrl: 'https://api.yarah.test',
       anonKey: 'anon-key',
       fetch: fetch as any,
     });
@@ -325,7 +325,7 @@ describe('@insforge/sdk/ssr cookies', () => {
   });
 });
 
-describe('@insforge/sdk/ssr auth actions', () => {
+describe('@yarahdev/sdk/ssr auth actions', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
@@ -336,7 +336,7 @@ describe('@insforge/sdk/ssr auth actions', () => {
     const refreshToken = jwtWithExp(Math.floor(Date.now() / 1000) + 86400);
     const cookies = cookieStore();
     const fetch = vi.fn(async (url: string, init: RequestInit) => {
-      expect(url).toBe('https://api.insforge.test/api/auth/sessions?client_type=mobile');
+      expect(url).toBe('https://api.yarah.test/api/auth/sessions?client_type=mobile');
       expect(JSON.parse(String(init.body))).toEqual({
         email: 'user@example.com',
         password: 'secret',
@@ -350,7 +350,7 @@ describe('@insforge/sdk/ssr auth actions', () => {
 
     const auth = createAuthActions({
       cookies,
-      baseUrl: 'https://api.insforge.test',
+      baseUrl: 'https://api.yarah.test',
       anonKey: 'anon-key',
       fetch: fetch as any,
     });
@@ -363,15 +363,15 @@ describe('@insforge/sdk/ssr auth actions', () => {
     expect(result.data).toEqual({ user: { id: 'user-1' } });
     expect('accessToken' in result.data!).toBe(false);
     expect('refreshToken' in result.data!).toBe(false);
-    expect(cookies.values.get('insforge_access_token')).toBe(accessToken);
-    expect(cookies.values.get('insforge_refresh_token')).toBe(refreshToken);
-    expect(cookies.options.get('insforge_refresh_token')?.httpOnly).toBe(true);
+    expect(cookies.values.get('yarah_access_token')).toBe(accessToken);
+    expect(cookies.values.get('yarah_refresh_token')).toBe(refreshToken);
+    expect(cookies.options.get('yarah_refresh_token')?.httpOnly).toBe(true);
   });
 
   it('does not write cookies or return tokens when sign-up requires verification', async () => {
     const cookies = cookieStore();
     const fetch = vi.fn(async (url: string, init: RequestInit) => {
-      expect(url).toBe('https://api.insforge.test/api/auth/users?client_type=mobile');
+      expect(url).toBe('https://api.yarah.test/api/auth/users?client_type=mobile');
       expect(JSON.parse(String(init.body))).toEqual({
         email: 'new@example.com',
         password: 'secret',
@@ -384,7 +384,7 @@ describe('@insforge/sdk/ssr auth actions', () => {
 
     const auth = createAuthActions({
       cookies,
-      baseUrl: 'https://api.insforge.test',
+      baseUrl: 'https://api.yarah.test',
       anonKey: 'anon-key',
       fetch: fetch as any,
     });
@@ -403,7 +403,7 @@ describe('@insforge/sdk/ssr auth actions', () => {
     const refreshToken = jwtWithExp(Math.floor(Date.now() / 1000) + 86400);
     const cookies = cookieStore();
     const fetch = vi.fn(async (url: string, init: RequestInit) => {
-      expect(url).toBe('https://api.insforge.test/api/auth/id-token?client_type=mobile');
+      expect(url).toBe('https://api.yarah.test/api/auth/id-token?client_type=mobile');
       expect(JSON.parse(String(init.body))).toEqual({
         provider: 'google',
         token: 'id-token',
@@ -418,7 +418,7 @@ describe('@insforge/sdk/ssr auth actions', () => {
 
     const auth = createAuthActions({
       cookies,
-      baseUrl: 'https://api.insforge.test',
+      baseUrl: 'https://api.yarah.test',
       anonKey: 'anon-key',
       fetch: fetch as any,
     });
@@ -432,7 +432,7 @@ describe('@insforge/sdk/ssr auth actions', () => {
     expect('accessToken' in result.data!).toBe(false);
     expect('refreshToken' in result.data!).toBe(false);
     expect('csrfToken' in result.data!).toBe(false);
-    expect(cookies.values.get('insforge_refresh_token')).toBe(refreshToken);
+    expect(cookies.values.get('yarah_refresh_token')).toBe(refreshToken);
   });
 
   it('starts OAuth through server mode without writing session cookies', async () => {
@@ -440,7 +440,7 @@ describe('@insforge/sdk/ssr auth actions', () => {
     const fetch = vi.fn(async (url: string) => {
       const oauthUrl = new URL(url);
       expect(oauthUrl.origin + oauthUrl.pathname).toBe(
-        'https://api.insforge.test/api/auth/oauth/google'
+        'https://api.yarah.test/api/auth/oauth/google'
       );
       expect(oauthUrl.searchParams.get('redirect_uri')).toBe('https://app.test/api/auth/callback');
       expect(oauthUrl.searchParams.get('code_challenge')).toBeTruthy();
@@ -451,7 +451,7 @@ describe('@insforge/sdk/ssr auth actions', () => {
 
     const auth = createAuthActions({
       cookies,
-      baseUrl: 'https://api.insforge.test',
+      baseUrl: 'https://api.yarah.test',
       anonKey: 'anon-key',
       fetch: fetch as any,
     });
@@ -471,7 +471,7 @@ describe('@insforge/sdk/ssr auth actions', () => {
     const refreshToken = jwtWithExp(Math.floor(Date.now() / 1000) + 86400);
     const cookies = cookieStore();
     const fetch = vi.fn(async (url: string, init: RequestInit) => {
-      expect(url).toBe('https://api.insforge.test/api/auth/oauth/exchange?client_type=mobile');
+      expect(url).toBe('https://api.yarah.test/api/auth/oauth/exchange?client_type=mobile');
       expect(JSON.parse(String(init.body))).toEqual({
         code: 'oauth-code',
         code_verifier: 'code-verifier',
@@ -485,7 +485,7 @@ describe('@insforge/sdk/ssr auth actions', () => {
 
     const auth = createAuthActions({
       cookies,
-      baseUrl: 'https://api.insforge.test',
+      baseUrl: 'https://api.yarah.test',
       anonKey: 'anon-key',
       fetch: fetch as any,
     });
@@ -494,8 +494,8 @@ describe('@insforge/sdk/ssr auth actions', () => {
     expect(result.error).toBeNull();
     expect(result.data).toEqual({ user: { id: 'user-1' } });
     expect('accessToken' in result.data!).toBe(false);
-    expect(cookies.values.get('insforge_access_token')).toBe(accessToken);
-    expect(cookies.values.get('insforge_refresh_token')).toBe(refreshToken);
+    expect(cookies.values.get('yarah_access_token')).toBe(accessToken);
+    expect(cookies.values.get('yarah_refresh_token')).toBe(refreshToken);
   });
 
   it('verifies email and returns sanitized data', async () => {
@@ -503,7 +503,7 @@ describe('@insforge/sdk/ssr auth actions', () => {
     const refreshToken = jwtWithExp(Math.floor(Date.now() / 1000) + 86400);
     const cookies = cookieStore();
     const fetch = vi.fn(async (url: string, init: RequestInit) => {
-      expect(url).toBe('https://api.insforge.test/api/auth/email/verify?client_type=mobile');
+      expect(url).toBe('https://api.yarah.test/api/auth/email/verify?client_type=mobile');
       expect(JSON.parse(String(init.body))).toEqual({
         email: 'user@example.com',
         otp: '123456',
@@ -517,7 +517,7 @@ describe('@insforge/sdk/ssr auth actions', () => {
 
     const auth = createAuthActions({
       cookies,
-      baseUrl: 'https://api.insforge.test',
+      baseUrl: 'https://api.yarah.test',
       anonKey: 'anon-key',
       fetch: fetch as any,
     });
@@ -529,13 +529,13 @@ describe('@insforge/sdk/ssr auth actions', () => {
     expect(result.error).toBeNull();
     expect(result.data).toEqual({ user: { id: 'user-1' } });
     expect('refreshToken' in result.data!).toBe(false);
-    expect(cookies.values.get('insforge_refresh_token')).toBe(refreshToken);
+    expect(cookies.values.get('yarah_refresh_token')).toBe(refreshToken);
   });
 
   it('throws when auth actions cannot resolve a writable cookie store', () => {
     expect(() =>
       createAuthActions({
-        baseUrl: 'https://api.insforge.test',
+        baseUrl: 'https://api.yarah.test',
         anonKey: 'anon-key',
         fetch: vi.fn() as any,
       })
@@ -545,8 +545,8 @@ describe('@insforge/sdk/ssr auth actions', () => {
   it('supports split request and response cookies for route handlers', async () => {
     const accessToken = jwtWithExp(Math.floor(Date.now() / 1000) + 900);
     const requestCookies = cookieStore({
-      insforge_access_token: accessToken,
-      insforge_refresh_token: 'old-refresh',
+      yarah_access_token: accessToken,
+      yarah_refresh_token: 'old-refresh',
     });
     const responseCookies = cookieStore();
     const fetch = vi.fn(async (_url: string, init: RequestInit) => {
@@ -557,42 +557,42 @@ describe('@insforge/sdk/ssr auth actions', () => {
     const auth = createAuthActions({
       requestCookies,
       responseCookies,
-      baseUrl: 'https://api.insforge.test',
+      baseUrl: 'https://api.yarah.test',
       anonKey: 'anon-key',
       fetch: fetch as any,
     });
     const result = await auth.signOut();
 
     expect(result.error).toBeNull();
-    expect(responseCookies.values.get('insforge_access_token')).toBe('');
-    expect(responseCookies.values.get('insforge_refresh_token')).toBe('');
-    expect(responseCookies.options.get('insforge_refresh_token')?.maxAge).toBe(0);
-    expect(requestCookies.values.get('insforge_refresh_token')).toBe('old-refresh');
+    expect(responseCookies.values.get('yarah_access_token')).toBe('');
+    expect(responseCookies.values.get('yarah_refresh_token')).toBe('');
+    expect(responseCookies.options.get('yarah_refresh_token')?.maxAge).toBe(0);
+    expect(requestCookies.values.get('yarah_refresh_token')).toBe('old-refresh');
   });
 });
 
-describe('@insforge/sdk/ssr/middleware entrypoint', () => {
+describe('@yarahdev/sdk/ssr/middleware entrypoint', () => {
   it('exports the proxy-safe updateSession helper', () => {
     expect(updateSessionFromMiddleware).toBe(updateSession);
   });
 });
 
-describe('@insforge/sdk/ssr config', () => {
+describe('@yarahdev/sdk/ssr config', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
   });
 
   it('uses public env defaults for browser clients', () => {
-    vi.stubEnv('NEXT_PUBLIC_INSFORGE_URL', 'https://public.insforge.test');
-    vi.stubEnv('NEXT_PUBLIC_INSFORGE_ANON_KEY', 'public-anon-key');
+    vi.stubEnv('NEXT_PUBLIC_YARAH_URL', 'https://public.yarah.test');
+    vi.stubEnv('NEXT_PUBLIC_YARAH_ANON_KEY', 'public-anon-key');
     vi.stubGlobal('document', { cookie: '' });
 
     const client = createBrowserClient({
       fetch: vi.fn() as any,
     });
 
-    expect(client.getHttpClient().baseUrl).toBe('https://public.insforge.test');
+    expect(client.getHttpClient().baseUrl).toBe('https://public.yarah.test');
   });
 
   it('uses explicit browser config when process is unavailable', () => {
@@ -600,50 +600,50 @@ describe('@insforge/sdk/ssr config', () => {
     vi.stubGlobal('document', { cookie: '' });
 
     const client = createBrowserClient({
-      baseUrl: 'https://explicit.insforge.test',
+      baseUrl: 'https://explicit.yarah.test',
       anonKey: 'explicit-anon-key',
       fetch: vi.fn() as any,
     });
 
-    expect(client.getHttpClient().baseUrl).toBe('https://explicit.insforge.test');
+    expect(client.getHttpClient().baseUrl).toBe('https://explicit.yarah.test');
   });
 
   it('uses public env defaults for server clients', () => {
-    vi.stubEnv('NEXT_PUBLIC_INSFORGE_URL', 'https://public.insforge.test');
-    vi.stubEnv('NEXT_PUBLIC_INSFORGE_ANON_KEY', 'public-anon-key');
+    vi.stubEnv('NEXT_PUBLIC_YARAH_URL', 'https://public.yarah.test');
+    vi.stubEnv('NEXT_PUBLIC_YARAH_ANON_KEY', 'public-anon-key');
 
     const client = createServerClient();
 
-    expect(client.getHttpClient().baseUrl).toBe('https://public.insforge.test');
+    expect(client.getHttpClient().baseUrl).toBe('https://public.yarah.test');
   });
 
   it('throws when SSR browser config cannot resolve baseUrl', () => {
-    vi.stubEnv('NEXT_PUBLIC_INSFORGE_URL', '');
-    vi.stubEnv('NEXT_PUBLIC_INSFORGE_ANON_KEY', 'public-anon-key');
+    vi.stubEnv('NEXT_PUBLIC_YARAH_URL', '');
+    vi.stubEnv('NEXT_PUBLIC_YARAH_ANON_KEY', 'public-anon-key');
     vi.stubGlobal('document', { cookie: '' });
 
     expect(() =>
       createBrowserClient({
         fetch: vi.fn() as any,
       })
-    ).toThrow('NEXT_PUBLIC_INSFORGE_URL');
+    ).toThrow('NEXT_PUBLIC_YARAH_URL');
   });
 
   it('throws when SSR server config cannot resolve anonKey', () => {
-    vi.stubEnv('NEXT_PUBLIC_INSFORGE_URL', 'https://public.insforge.test');
-    vi.stubEnv('NEXT_PUBLIC_INSFORGE_ANON_KEY', '');
+    vi.stubEnv('NEXT_PUBLIC_YARAH_URL', 'https://public.yarah.test');
+    vi.stubEnv('NEXT_PUBLIC_YARAH_ANON_KEY', '');
 
-    expect(() => createServerClient()).toThrow('NEXT_PUBLIC_INSFORGE_ANON_KEY');
+    expect(() => createServerClient()).toThrow('NEXT_PUBLIC_YARAH_ANON_KEY');
   });
 });
 
-describe('@insforge/sdk/ssr refresh route', () => {
+describe('@yarahdev/sdk/ssr refresh route', () => {
   it('returns AUTH_UNAUTHORIZED when refresh token cookie is missing', async () => {
     const result = await refreshAuth({
       request: new Request('https://app.test/api/auth/refresh', {
         method: 'POST',
       }),
-      baseUrl: 'https://api.insforge.test',
+      baseUrl: 'https://api.yarah.test',
       anonKey: 'anon-key',
       fetch: vi.fn() as any,
     });
@@ -658,7 +658,7 @@ describe('@insforge/sdk/ssr refresh route', () => {
     const accessToken = jwtWithExp(Math.floor(Date.now() / 1000) + 900);
     const refreshToken = jwtWithExp(Math.floor(Date.now() / 1000) + 86400);
     const fetch = vi.fn(async (url: string, init: RequestInit) => {
-      expect(url).toBe('https://api.insforge.test/api/auth/refresh?client_type=mobile');
+      expect(url).toBe('https://api.yarah.test/api/auth/refresh?client_type=mobile');
       expect(new Headers(init.headers).get('Authorization')).toBe('Bearer anon-key');
       expect(JSON.parse(init.body as string)).toEqual({
         refresh_token: 'old-refresh',
@@ -671,12 +671,12 @@ describe('@insforge/sdk/ssr refresh route', () => {
     });
     const request = new Request('https://app.test/api/auth/refresh', {
       method: 'POST',
-      headers: { cookie: 'insforge_refresh_token=old-refresh' },
+      headers: { cookie: 'yarah_refresh_token=old-refresh' },
     });
 
     const result = await refreshAuth({
       request,
-      baseUrl: 'https://api.insforge.test',
+      baseUrl: 'https://api.yarah.test',
       anonKey: 'anon-key',
       fetch: fetch as any,
     });
@@ -689,7 +689,7 @@ describe('@insforge/sdk/ssr refresh route', () => {
     expect(setCookies.some((cookie) => cookie.includes('HttpOnly'))).toBe(true);
     expect(
       setCookies.some(
-        (cookie) => cookie.startsWith('insforge_access_token=') && !cookie.includes('HttpOnly')
+        (cookie) => cookie.startsWith('yarah_access_token=') && !cookie.includes('HttpOnly')
       )
     ).toBe(true);
   });
@@ -703,7 +703,7 @@ describe('@insforge/sdk/ssr refresh route', () => {
       })
     );
     const { POST } = createRefreshAuthRouter({
-      baseUrl: 'https://api.insforge.test',
+      baseUrl: 'https://api.yarah.test',
       anonKey: 'anon-key',
       fetch: fetch as any,
     });
@@ -711,7 +711,7 @@ describe('@insforge/sdk/ssr refresh route', () => {
     const response = await POST(
       new Request('https://app.test/api/auth/refresh', {
         method: 'POST',
-        headers: { cookie: 'insforge_refresh_token=old-refresh' },
+        headers: { cookie: 'yarah_refresh_token=old-refresh' },
       })
     );
 
@@ -720,7 +720,7 @@ describe('@insforge/sdk/ssr refresh route', () => {
   });
 });
 
-describe('@insforge/sdk/ssr updateSession', () => {
+describe('@yarahdev/sdk/ssr updateSession', () => {
   it('does not write cookies for fully anonymous requests', async () => {
     const requestCookies = cookieStore();
     const responseCookies = cookieStore();
@@ -728,7 +728,7 @@ describe('@insforge/sdk/ssr updateSession', () => {
     const result = await updateSession({
       requestCookies,
       responseCookies,
-      baseUrl: 'https://api.insforge.test',
+      baseUrl: 'https://api.yarah.test',
       anonKey: 'anon-key',
       fetch: vi.fn() as any,
     });
@@ -746,14 +746,14 @@ describe('@insforge/sdk/ssr updateSession', () => {
 
   it('does not refresh when access token is still fresh', async () => {
     const accessToken = jwtWithExp(Math.floor(Date.now() / 1000) + 3600);
-    const requestCookies = cookieStore({ insforge_access_token: accessToken });
+    const requestCookies = cookieStore({ yarah_access_token: accessToken });
     const responseCookies = cookieStore();
     const fetch = vi.fn();
 
     const result = await updateSession({
       requestCookies,
       responseCookies,
-      baseUrl: 'https://api.insforge.test',
+      baseUrl: 'https://api.yarah.test',
       anonKey: 'anon-key',
       fetch: fetch as any,
     });
@@ -771,8 +771,8 @@ describe('@insforge/sdk/ssr updateSession', () => {
     const freshAccess = jwtWithExp(Math.floor(Date.now() / 1000) + 900);
     const freshRefresh = jwtWithExp(Math.floor(Date.now() / 1000) + 86400);
     const requestCookies = cookieStore({
-      insforge_access_token: expiredAccess,
-      insforge_refresh_token: 'old-refresh',
+      yarah_access_token: expiredAccess,
+      yarah_refresh_token: 'old-refresh',
     });
     const responseCookies = cookieStore();
     const fetch = vi.fn(async () =>
@@ -786,15 +786,15 @@ describe('@insforge/sdk/ssr updateSession', () => {
     const result = await updateSession({
       requestCookies,
       responseCookies,
-      baseUrl: 'https://api.insforge.test',
+      baseUrl: 'https://api.yarah.test',
       anonKey: 'anon-key',
       fetch: fetch as any,
     });
 
     expect(result.refreshed).toBe(true);
     expect(result.accessToken).toBe(freshAccess);
-    expect(requestCookies.values.get('insforge_access_token')).toBe(freshAccess);
-    expect(responseCookies.values.get('insforge_access_token')).toBe(freshAccess);
-    expect(responseCookies.options.get('insforge_refresh_token')?.httpOnly).toBe(true);
+    expect(requestCookies.values.get('yarah_access_token')).toBe(freshAccess);
+    expect(responseCookies.values.get('yarah_access_token')).toBe(freshAccess);
+    expect(responseCookies.options.get('yarah_refresh_token')?.httpOnly).toBe(true);
   });
 });

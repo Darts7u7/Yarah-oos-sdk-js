@@ -4,7 +4,7 @@
 
 **Goal:** Stop Deno Subhosting from returning `508 Loop Detected` when one bundled function uses the SDK to invoke another, by short-circuiting the SDK to the router's handler in-process.
 
-**Architecture:** Auto-generated `main.ts` exposes the router handler on `globalThis.__insforge_dispatch__`. The SDK's `Functions.invoke` probes for that global; when present, it constructs a `Request` and awaits the handler directly — no network. When absent (browser, external server, old router), it falls through to the existing HTTP path. The decision is per-call and requires no new SDK config flag.
+**Architecture:** Auto-generated `main.ts` exposes the router handler on `globalThis.__yarah_dispatch__`. The SDK's `Functions.invoke` probes for that global; when present, it constructs a `Request` and awaits the handler directly — no network. When absent (browser, external server, old router), it falls through to the existing HTTP path. The decision is per-call and requires no new SDK config flag.
 
 **Tech Stack:** TypeScript, Vitest, Deno (router runtime).
 
@@ -18,10 +18,10 @@
 | ----------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `src/lib/http-client.ts`                        | Modify                        | Extract `serializeBody` and `parseResponse` as exported helpers; refactor `handleRequest` to call them |
 | `src/lib/__tests__/http-client.test.ts`         | Modify                        | Add direct unit tests for the two extracted helpers                                                    |
-| `src/types/globals.d.ts`                        | Create                        | Declare type for `globalThis.__insforge_dispatch__`                                                    |
+| `src/types/globals.d.ts`                        | Create                        | Declare type for `globalThis.__yarah_dispatch__`                                                    |
 | `src/modules/functions.ts`                      | Modify                        | Add in-process dispatch branch + `buildInProcessRequest`                                               |
 | `src/modules/__tests__/functions.test.ts`       | Create                        | Cover both HTTP path and in-process path for `Functions.invoke`                                        |
-| **`generateRouter()` in InsForge backend repo** | **Modify (out of this repo)** | Wrap handler in named `dispatch` const; publish on `globalThis`                                        |
+| **`generateRouter()` in Yarah backend repo** | **Modify (out of this repo)** | Wrap handler in named `dispatch` const; publish on `globalThis`                                        |
 
 Two helpers (`serializeBody`, `parseResponse`) stay co-located in `http-client.ts` because they encode the SDK's wire-format conventions and the file already owns that domain. Pulling them into separate files would scatter cohesive logic without a clear win.
 
@@ -165,7 +165,7 @@ git commit -m "refactor(http-client): extract serializeBody helper"
 - Modify: `src/lib/http-client.ts` (current response-parsing block at lines 275-345)
 - Test: `src/lib/__tests__/http-client.test.ts`
 
-Pure refactor. The new helper handles 204, JSON/text parsing, and non-2xx → `InsForgeError` mapping. Logger calls remain inside `handleRequest` (the helper has no logger dependency).
+Pure refactor. The new helper handles 204, JSON/text parsing, and non-2xx → `YarahError` mapping. Logger calls remain inside `handleRequest` (the helper has no logger dependency).
 
 - [ ] **Step 1: Write failing tests for `parseResponse`**
 
@@ -228,7 +228,7 @@ describe('parseResponse', () => {
     expect(await parseResponse(res)).toBe('hello');
   });
 
-  it('throws InsForgeError mapped from { error, message } body on non-2xx', async () => {
+  it('throws YarahError mapped from { error, message } body on non-2xx', async () => {
     const res = makeResponse({
       status: 400,
       statusText: 'Bad Request',
@@ -242,19 +242,19 @@ describe('parseResponse', () => {
     });
   });
 
-  it('preserves extra fields on InsForgeError from error body', async () => {
+  it('preserves extra fields on YarahError from error body', async () => {
     const res = makeResponse({
       status: 400,
       contentType: 'application/json',
       jsonValue: { error: 'X', message: 'm', requestId: 'r-1', detail: 'd' },
     });
     const err = await parseResponse(res).catch((e) => e);
-    expect(err).toBeInstanceOf(InsForgeError);
+    expect(err).toBeInstanceOf(YarahError);
     expect((err as any).requestId).toBe('r-1');
     expect((err as any).detail).toBe('d');
   });
 
-  it('throws generic InsForgeError on non-2xx without error body', async () => {
+  it('throws generic YarahError on non-2xx without error body', async () => {
     const res = makeResponse({
       status: 503,
       statusText: 'Service Unavailable',
@@ -304,13 +304,13 @@ In `src/lib/http-client.ts`, add below `serializeBody`:
 
 ```ts
 /**
- * Parse a fetch Response into typed data, mapping non-2xx to InsForgeError.
+ * Parse a fetch Response into typed data, mapping non-2xx to YarahError.
  * - 204 → undefined
  * - JSON content-type → parsed JSON
  * - other content-type → text
- * - body parse failure → InsForgeError(PARSE_ERROR | REQUEST_FAILED)
- * - non-2xx with `{ error, message }` body → InsForgeError.fromApiError, all extra fields preserved
- * - non-2xx without that shape → InsForgeError(REQUEST_FAILED)
+ * - body parse failure → YarahError(PARSE_ERROR | REQUEST_FAILED)
+ * - non-2xx with `{ error, message }` body → YarahError.fromApiError, all extra fields preserved
+ * - non-2xx without that shape → YarahError(REQUEST_FAILED)
  */
 export async function parseResponse<T>(response: Response): Promise<T> {
   if (response.status === 204) return undefined as T;
@@ -324,7 +324,7 @@ export async function parseResponse<T>(response: Response): Promise<T> {
       data = await response.text();
     }
   } catch (parseErr: any) {
-    throw new InsForgeError(
+    throw new YarahError(
       `Failed to parse response body: ${parseErr?.message || 'Unknown error'}`,
       response.status,
       response.ok ? 'PARSE_ERROR' : 'REQUEST_FAILED'
@@ -336,7 +336,7 @@ export async function parseResponse<T>(response: Response): Promise<T> {
       if (!data.statusCode && !data.status) {
         data.statusCode = response.status;
       }
-      const error = InsForgeError.fromApiError(data as ApiError);
+      const error = YarahError.fromApiError(data as ApiError);
       Object.keys(data).forEach((key) => {
         if (key !== 'error' && key !== 'message' && key !== 'statusCode') {
           (error as any)[key] = data[key];
@@ -344,7 +344,7 @@ export async function parseResponse<T>(response: Response): Promise<T> {
       });
       throw error;
     }
-    throw new InsForgeError(
+    throw new YarahError(
       `Request failed: ${response.statusText}`,
       response.status,
       'REQUEST_FAILED'
@@ -366,7 +366,7 @@ try {
   data = await parseResponse<T>(response);
 } catch (err) {
   if (timer !== undefined) clearTimeout(timer);
-  if (err instanceof InsForgeError) {
+  if (err instanceof YarahError) {
     this.logger.logResponse(
       method,
       url,
@@ -408,7 +408,7 @@ git commit -m "refactor(http-client): extract parseResponse helper"
 
 - Create: `src/types/globals.d.ts`
 
-Lets the SDK reference `globalThis.__insforge_dispatch__` without `as any`. `tsconfig.json` already includes `src/**/*`, so no config change is needed.
+Lets the SDK reference `globalThis.__yarah_dispatch__` without `as any`. `tsconfig.json` already includes `src/**/*`, so no config change is needed.
 
 - [ ] **Step 1: Create the file**
 
@@ -419,11 +419,11 @@ export {};
 
 declare global {
   // Published by the auto-generated Deno router (main.ts) inside an
-  // InsForge functions deployment. The SDK probes this to short-circuit
+  // Yarah functions deployment. The SDK probes this to short-circuit
   // function-to-function calls in-process and avoid Deno Subhosting's
   // 508 Loop Detected. Undefined everywhere else (browser, external server).
   // eslint-disable-next-line no-var
-  var __insforge_dispatch__: ((req: Request) => Promise<Response>) | undefined;
+  var __yarah_dispatch__: ((req: Request) => Promise<Response>) | undefined;
 }
 ```
 
@@ -436,7 +436,7 @@ Expected: no errors.
 
 ```bash
 git add src/types/globals.d.ts
-git commit -m "feat(types): declare globalThis.__insforge_dispatch__"
+git commit -m "feat(types): declare globalThis.__yarah_dispatch__"
 ```
 
 ---
@@ -458,7 +458,7 @@ Create `src/modules/__tests__/functions.test.ts`:
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Functions } from '../functions';
 import { HttpClient } from '../../lib/http-client';
-import { InsForgeError } from '../../types';
+import { YarahError } from '../../types';
 import { TokenManager } from '../../lib/token-manager';
 
 function makeTokenManager(): TokenManager {
@@ -496,21 +496,21 @@ describe('Functions.invoke', () => {
   });
 
   afterEach(() => {
-    delete (globalThis as any).__insforge_dispatch__;
+    delete (globalThis as any).__yarah_dispatch__;
   });
 
   describe('HTTP path (no global)', () => {
     it('uses subhosting URL when functionsUrl is configured', async () => {
       const fetchFn = vi.fn().mockResolvedValue(jsonRes(200, { ok: true }));
       const http = makeHttp(fetchFn);
-      const fns = new Functions(http, 'https://app.functions.insforge.app');
+      const fns = new Functions(http, 'https://app.functions.apps.yarah.dev');
 
       const result = await fns.invoke('hello', { body: { x: 1 } });
 
       expect(result).toEqual({ data: { ok: true }, error: null });
       expect(fetchFn).toHaveBeenCalledOnce();
       const calledUrl = fetchFn.mock.calls[0][0];
-      expect(String(calledUrl)).toBe('https://app.functions.insforge.app/hello');
+      expect(String(calledUrl)).toBe('https://app.functions.apps.yarah.dev/hello');
     });
 
     it('falls back to proxy when subhosting returns 404', async () => {
@@ -519,7 +519,7 @@ describe('Functions.invoke', () => {
         .mockResolvedValueOnce(jsonRes(404, { error: 'NOT_FOUND', message: 'no' }, 'Not Found'))
         .mockResolvedValueOnce(jsonRes(200, { proxied: true }));
       const http = makeHttp(fetchFn);
-      const fns = new Functions(http, 'https://app.functions.insforge.app');
+      const fns = new Functions(http, 'https://app.functions.apps.yarah.dev');
 
       const result = await fns.invoke('hello');
 
@@ -533,9 +533,9 @@ describe('Functions.invoke', () => {
     it('calls dispatch and returns parsed JSON without using fetch', async () => {
       const fetchFn = vi.fn();
       const http = makeHttp(fetchFn);
-      const fns = new Functions(http, 'https://app.functions.insforge.app');
+      const fns = new Functions(http, 'https://app.functions.apps.yarah.dev');
       const dispatch = vi.fn().mockResolvedValue(jsonRes(200, { ok: 1 }));
-      (globalThis as any).__insforge_dispatch__ = dispatch;
+      (globalThis as any).__yarah_dispatch__ = dispatch;
 
       const result = await fns.invoke('hello', { body: { x: 1 } });
 
@@ -544,33 +544,33 @@ describe('Functions.invoke', () => {
       expect(dispatch).toHaveBeenCalledOnce();
     });
 
-    it('maps non-2xx JSON error to InsForgeError', async () => {
+    it('maps non-2xx JSON error to YarahError', async () => {
       const http = makeHttp(vi.fn());
       const fns = new Functions(http);
-      (globalThis as any).__insforge_dispatch__ = vi
+      (globalThis as any).__yarah_dispatch__ = vi
         .fn()
         .mockResolvedValue(jsonRes(500, { error: 'BOOM', message: 'kapow' }, 'Server Error'));
 
       const result = await fns.invoke('hello');
 
       expect(result.data).toBeNull();
-      expect(result.error).toBeInstanceOf(InsForgeError);
+      expect(result.error).toBeInstanceOf(YarahError);
       expect(result.error?.statusCode).toBe(500);
       expect(result.error?.error).toBe('BOOM');
       expect(result.error?.message).toBe('kapow');
     });
 
-    it('wraps a thrown dispatch error as InsForgeError(500, FUNCTION_ERROR)', async () => {
+    it('wraps a thrown dispatch error as YarahError(500, FUNCTION_ERROR)', async () => {
       const http = makeHttp(vi.fn());
       const fns = new Functions(http);
-      (globalThis as any).__insforge_dispatch__ = vi
+      (globalThis as any).__yarah_dispatch__ = vi
         .fn()
         .mockRejectedValue(new Error('handler crashed'));
 
       const result = await fns.invoke('hello');
 
       expect(result.data).toBeNull();
-      expect(result.error).toBeInstanceOf(InsForgeError);
+      expect(result.error).toBeInstanceOf(YarahError);
       expect(result.error?.statusCode).toBe(500);
       expect(result.error?.error).toBe('FUNCTION_ERROR');
       expect(result.error?.message).toBe('handler crashed');
@@ -580,7 +580,7 @@ describe('Functions.invoke', () => {
       const http = makeHttp(vi.fn());
       const fns = new Functions(http);
       const dispatch = vi.fn().mockResolvedValue(jsonRes(200, {}));
-      (globalThis as any).__insforge_dispatch__ = dispatch;
+      (globalThis as any).__yarah_dispatch__ = dispatch;
 
       await fns.invoke('hello', { body: { a: 1, b: 'x' } });
 
@@ -593,7 +593,7 @@ describe('Functions.invoke', () => {
       const http = makeHttp(vi.fn());
       const fns = new Functions(http);
       const dispatch = vi.fn().mockResolvedValue(jsonRes(200, {}));
-      (globalThis as any).__insforge_dispatch__ = dispatch;
+      (globalThis as any).__yarah_dispatch__ = dispatch;
 
       await fns.invoke('hello', {
         body: { x: 1 },
@@ -609,7 +609,7 @@ describe('Functions.invoke', () => {
       const http = makeHttp(vi.fn());
       const fns = new Functions(http);
       const dispatch = vi.fn().mockResolvedValue(jsonRes(200, {}));
-      (globalThis as any).__insforge_dispatch__ = dispatch;
+      (globalThis as any).__yarah_dispatch__ = dispatch;
 
       await fns.invoke('foo/bar');
 
@@ -621,7 +621,7 @@ describe('Functions.invoke', () => {
       const http = makeHttp(vi.fn());
       const fns = new Functions(http);
       const dispatch = vi.fn().mockResolvedValue(jsonRes(200, {}));
-      (globalThis as any).__insforge_dispatch__ = dispatch;
+      (globalThis as any).__yarah_dispatch__ = dispatch;
 
       await fns.invoke('hello', { method: 'GET' });
 
@@ -633,7 +633,7 @@ describe('Functions.invoke', () => {
     it('returns { data: undefined, error: null } when dispatch returns 204', async () => {
       const http = makeHttp(vi.fn());
       const fns = new Functions(http);
-      (globalThis as any).__insforge_dispatch__ = vi
+      (globalThis as any).__yarah_dispatch__ = vi
         .fn()
         .mockResolvedValue(new Response(null, { status: 204 }));
 
@@ -656,7 +656,7 @@ Replace the entire `src/modules/functions.ts` file with:
 
 ````ts
 import { HttpClient, parseResponse, serializeBody } from '../lib/http-client';
-import { InsForgeError } from '../types';
+import { YarahError } from '../types';
 
 export interface FunctionInvokeOptions {
   /**
@@ -696,16 +696,16 @@ export class Functions {
 
   /**
    * Derive the subhosting URL from the base URL.
-   * Base URL pattern: https://{appKey}.{region}.insforge.app
-   * Functions URL:    https://{appKey}.functions.insforge.app
-   * Only applies to .insforge.app domains.
+   * Base URL pattern: https://{appKey}.{region}.apps.yarah.dev
+   * Functions URL:    https://{appKey}.functions.apps.yarah.dev
+   * Only applies to .apps.yarah.dev domains.
    */
   private static deriveSubhostingUrl(baseUrl: string): string | undefined {
     try {
       const { hostname } = new URL(baseUrl);
-      if (!hostname.endsWith('.insforge.app')) return undefined;
+      if (!hostname.endsWith('.apps.yarah.dev')) return undefined;
       const appKey = hostname.split('.')[0];
-      return `https://${appKey}.functions.insforge.app`;
+      return `https://${appKey}.functions.apps.yarah.dev`;
     } catch {
       return undefined;
     }
@@ -721,7 +721,7 @@ export class Functions {
     body: unknown,
     callerHeaders: Record<string, string>
   ): Request {
-    const url = new URL('/' + slug, 'http://insforge.local').toString();
+    const url = new URL('/' + slug, 'http://yarah.local').toString();
     // Start from HttpClient defaults (Authorization, anon key, etc.) so
     // in-process calls carry the same auth context as HTTP calls.
     const headers: Record<string, string> = { ...this.http.getHeaders() };
@@ -738,7 +738,7 @@ export class Functions {
    * Invoke an Edge Function.
    *
    * Dispatch order:
-   * 1. If `globalThis.__insforge_dispatch__` is present, call it in-process.
+   * 1. If `globalThis.__yarah_dispatch__` is present, call it in-process.
    *    This avoids Deno Subhosting's 508 Loop Detected when one bundled
    *    function invokes another inside the same deployment.
    * 2. Otherwise, try the configured subhosting URL.
@@ -750,11 +750,11 @@ export class Functions {
   async invoke<T = any>(
     slug: string,
     options: FunctionInvokeOptions = {}
-  ): Promise<{ data: T | null; error: InsForgeError | null }> {
+  ): Promise<{ data: T | null; error: YarahError | null }> {
     const { method = 'POST', body, headers = {} } = options;
 
     // 1. In-process dispatch (same Deno deployment as the router)
-    const dispatch = globalThis.__insforge_dispatch__;
+    const dispatch = globalThis.__yarah_dispatch__;
     if (typeof dispatch === 'function') {
       try {
         const req = this.buildInProcessRequest(slug, method, body, headers);
@@ -766,9 +766,9 @@ export class Functions {
         return {
           data: null,
           error:
-            error instanceof InsForgeError
+            error instanceof YarahError
               ? error
-              : new InsForgeError(
+              : new YarahError(
                   error instanceof Error ? error.message : 'Function invocation failed',
                   500,
                   'FUNCTION_ERROR'
@@ -787,15 +787,15 @@ export class Functions {
         return { data, error: null };
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') throw error;
-        if (error instanceof InsForgeError && error.statusCode === 404) {
+        if (error instanceof YarahError && error.statusCode === 404) {
           // fall through to proxy
         } else {
           return {
             data: null,
             error:
-              error instanceof InsForgeError
+              error instanceof YarahError
                 ? error
-                : new InsForgeError(
+                : new YarahError(
                     error instanceof Error ? error.message : 'Function invocation failed',
                     500,
                     'FUNCTION_ERROR'
@@ -815,9 +815,9 @@ export class Functions {
       return {
         data: null,
         error:
-          error instanceof InsForgeError
+          error instanceof YarahError
             ? error
-            : new InsForgeError(
+            : new YarahError(
                 error instanceof Error ? error.message : 'Function invocation failed',
                 500,
                 'FUNCTION_ERROR'
@@ -852,7 +852,7 @@ Expected: no errors. (If lint flags `no-empty-block` on the `// fall through to 
 
 ```bash
 git add src/modules/functions.ts src/modules/__tests__/functions.test.ts
-git commit -m "feat(functions): in-process dispatch via globalThis.__insforge_dispatch__"
+git commit -m "feat(functions): in-process dispatch via globalThis.__yarah_dispatch__"
 ```
 
 ---
@@ -881,9 +881,9 @@ If `git status` shows any untracked or modified files at this point, investigate
 
 ---
 
-## Task 6: Cross-Repo — Update `generateRouter` in InsForge Backend
+## Task 6: Cross-Repo — Update `generateRouter` in Yarah Backend
 
-**This task is performed in the InsForge backend repository, NOT in this SDK repo.** Locate the `generateRouter(functions)` function (it produces the auto-generated `main.ts` for Deno deployments).
+**This task is performed in the Yarah backend repository, NOT in this SDK repo.** Locate the `generateRouter(functions)` function (it produces the auto-generated `main.ts` for Deno deployments).
 
 The change is mechanical: extract today's inline `Deno.serve` callback into a named `dispatch` const, publish it on `globalThis`, then pass it to `Deno.serve`. Apply to both the empty-functions branch and the populated branch.
 
@@ -901,7 +901,7 @@ const dispatch = async (req: Request): Promise<Response> => {
   if (pathname === "/health" || pathname === "/") {
     return new Response(JSON.stringify({
       status: "ok",
-      type: "insforge-functions",
+      type: "yarah-functions",
       functions: [],
       timestamp: new Date().toISOString(),
     }), {
@@ -917,7 +917,7 @@ const dispatch = async (req: Request): Promise<Response> => {
   });
 };
 
-(globalThis as any).__insforge_dispatch__ = dispatch;
+(globalThis as any).__yarah_dispatch__ = dispatch;
 
 Deno.serve(dispatch);
 `;
@@ -944,7 +944,7 @@ const dispatch = async (req: Request): Promise<Response> => {
   if (pathname === "/health" || pathname === "/") {
     return new Response(JSON.stringify({
       status: "ok",
-      type: "insforge-functions",
+      type: "yarah-functions",
       functions: Object.keys(routes),
       timestamp: new Date().toISOString(),
     }), {
@@ -1004,7 +1004,7 @@ const dispatch = async (req: Request): Promise<Response> => {
   }
 };
 
-(globalThis as any).__insforge_dispatch__ = dispatch;
+(globalThis as any).__yarah_dispatch__ = dispatch;
 
 Deno.serve(dispatch);
 `;
@@ -1018,7 +1018,7 @@ Run the backend's existing test/typecheck/build for the function-deployment serv
 
 - [ ] **Step 4: Deploy a test function pair to verify end-to-end**
 
-Deploy two functions to the same project where function B uses `@insforge/sdk` (with this repo's changes published) to call function A. Confirm:
+Deploy two functions to the same project where function B uses `@yarahdev/sdk` (with this repo's changes published) to call function A. Confirm:
 
 - B → A succeeds, returns A's response.
 - No `508 Loop Detected` in logs.
@@ -1035,5 +1035,5 @@ Use the backend repo's commit conventions.
 - **Why no retry / timeout on in-process path:** the call never leaves the process, so network failures and network timeouts don't exist. A handler that hangs is a business bug; surfacing it (rather than swallowing it under a 30s default) is the correct behavior.
 - **Why no token refresh on in-process path:** the calling function already holds the request's auth context; silently rotating tokens during an internal call would mutate caller-visible state in surprising ways. If a handler returns 401, surface it.
 - **Why no fallback from in-process to HTTP on 404:** if the slug isn't in the routes table, no proxy will have it either, and falling back risks re-triggering the loop in misconfigurations.
-- **Why a placeholder host (`http://insforge.local`):** Deno requires absolute URLs in `Request`. The router only reads `pathname`. Using a non-routable `.local` host makes the in-process intent obvious to anyone reading a request log.
+- **Why a placeholder host (`http://yarah.local`):** Deno requires absolute URLs in `Request`. The router only reads `pathname`. Using a non-routable `.local` host makes the in-process intent obvious to anyone reading a request log.
 - **`isServerMode` is intentionally untouched.** It governs CSRF/localStorage in auth — orthogonal to in-process dispatch.

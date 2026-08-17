@@ -54,7 +54,7 @@ declare class NextResponseCookies {
   toString(): string;
 }
 
-describe('@insforge/sdk/ssr cookie store types', () => {
+describe('@yarahdev/sdk/ssr cookie store types', () => {
   it('accepts NextRequest and NextResponse cookie stores as CookieStore', () => {
     expectTypeOf<NextRequestCookies>().toMatchTypeOf<CookieStore>();
     expectTypeOf<NextResponseCookies>().toMatchTypeOf<CookieStore>();

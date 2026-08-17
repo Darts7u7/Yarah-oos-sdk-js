@@ -1,5 +1,5 @@
 /**
- * AI Module for Insforge SDK
+ * AI Module for Yarah SDK
  * Response format roughly matches OpenAI SDK for compatibility
  *
  * The backend handles all the complexity of different AI providers
@@ -14,7 +14,7 @@ import {
   ImageGenerationResponse,
   EmbeddingsRequest,
   EmbeddingsResponse,
-} from '@insforge/shared-schemas';
+} from '@yarahdev/shared-schemas';
 
 export class AI {
   public readonly chat: Chat;

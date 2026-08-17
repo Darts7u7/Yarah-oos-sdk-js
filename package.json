@@ -1,7 +1,7 @@
 {
-  "name": "@insforge/sdk",
+  "name": "@yarahdev/sdk",
   "version": "1.5.2",
-  "description": "Official JavaScript/TypeScript client for InsForge Backend-as-a-Service platform",
+  "description": "Official JavaScript/TypeScript client for Yarah Backend-as-a-Service platform",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -46,7 +46,7 @@
     "publish:stable": "npm run build && npm publish"
   },
   "keywords": [
-    "insforge",
+    "yarah",
     "baas",
     "backend",
     "sdk",
@@ -54,18 +54,18 @@
     "javascript",
     "client"
   ],
-  "author": "InsForge",
+  "author": "Yarah",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/InsForge/insforge-sdk-js.git"
+    "url": "https://github.com/Darts7u7/Yarah-oos-sdk-js.git"
   },
-  "homepage": "https://github.com/InsForge/insforge-sdk-js#readme",
+  "homepage": "https://github.com/Darts7u7/Yarah-oos-sdk-js#readme",
   "bugs": {
-    "url": "https://github.com/InsForge/insforge-sdk-js/issues"
+    "url": "https://github.com/Darts7u7/Yarah-oos-sdk-js/issues"
   },
   "dependencies": {
-    "@insforge/shared-schemas": "^1.2.1",
+    "@yarahdev/shared-schemas": "^1.2.1",
     "@supabase/postgrest-js": "^1.21.3",
     "socket.io-client": "^4.8.1"
   },

@@ -1,5 +1,5 @@
-import { InsForgeError, type AuthRefreshResponse, type InsForgeConfig } from '../types';
-import { ERROR_CODES } from '@insforge/shared-schemas';
+import { YarahError, type AuthRefreshResponse, type YarahConfig } from '../types';
+import { ERROR_CODES } from '@yarahdev/shared-schemas';
 import {
   clearAuthCookieHeaders,
   getCookieValue,
@@ -12,7 +12,7 @@ import {
 
 export interface RefreshAuthOptions
   extends
-    Omit<InsForgeConfig, 'accessToken' | 'edgeFunctionToken' | 'isServerMode' | 'auth'>,
+    Omit<YarahConfig, 'accessToken' | 'edgeFunctionToken' | 'isServerMode' | 'auth'>,
     AuthCookieSettings {
   request?: Request;
   cookies?: Pick<CookieStore, 'get'>;
@@ -24,7 +24,7 @@ export interface RefreshAuthResult {
   data: AuthRefreshResponse | null;
   accessToken: string | null;
   refreshToken: string | null;
-  error: InsForgeError | null;
+  error: YarahError | null;
 }
 
 export type RefreshAuthRouteHandler = (request: Request) => Promise<Response>;
@@ -41,8 +41,8 @@ function jsonResponse(
   });
 }
 
-function normalizeError(error: unknown): InsForgeError {
-  if (error instanceof InsForgeError) {
+function normalizeError(error: unknown): YarahError {
+  if (error instanceof YarahError) {
     return error;
   }
 
@@ -52,14 +52,14 @@ function normalizeError(error: unknown): InsForgeError {
       message?: unknown;
       statusCode?: unknown;
     };
-    return new InsForgeError(
+    return new YarahError(
       typeof body.message === 'string' ? body.message : 'Failed to refresh auth session',
       typeof body.statusCode === 'number' ? body.statusCode : 500,
       typeof body.error === 'string' ? body.error : ERROR_CODES.UNKNOWN_ERROR
     );
   }
 
-  return new InsForgeError(
+  return new YarahError(
     error instanceof Error ? error.message : 'Failed to refresh auth session',
     500,
     ERROR_CODES.UNKNOWN_ERROR
@@ -94,7 +94,7 @@ export async function refreshAuth(options: RefreshAuthOptions = {}): Promise<Ref
 
   if (!refreshToken) {
     clearAuthCookieHeaders(headers, options);
-    const error = new InsForgeError(
+    const error = new YarahError(
       'Refresh token cookie is missing',
       401,
       ERROR_CODES.AUTH_UNAUTHORIZED
@@ -118,14 +118,14 @@ export async function refreshAuth(options: RefreshAuthOptions = {}): Promise<Ref
 
   let { baseUrl, anonKey } = options;
   try {
-    baseUrl ||= process.env.NEXT_PUBLIC_INSFORGE_URL;
-    anonKey ||= process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY;
+    baseUrl ||= process.env.NEXT_PUBLIC_YARAH_URL;
+    anonKey ||= process.env.NEXT_PUBLIC_YARAH_ANON_KEY;
   } catch {
     // process may be unavailable outside Next.js/browser-bundled envs.
   }
   if (!baseUrl || !anonKey) {
     throw new Error(
-      'Missing InsForge baseUrl or anonKey. Pass baseUrl and anonKey to refreshAuth() or set NEXT_PUBLIC_INSFORGE_URL and NEXT_PUBLIC_INSFORGE_ANON_KEY.'
+      'Missing Yarah baseUrl or anonKey. Pass baseUrl and anonKey to refreshAuth() or set NEXT_PUBLIC_YARAH_URL and NEXT_PUBLIC_YARAH_ANON_KEY.'
     );
   }
 
@@ -144,7 +144,7 @@ export async function refreshAuth(options: RefreshAuthOptions = {}): Promise<Ref
   requestHeaders.set('Accept', 'application/json');
 
   let data: AuthRefreshResponse | null = null;
-  let error: InsForgeError | null = null;
+  let error: YarahError | null = null;
 
   try {
     const response = await fetchImpl(

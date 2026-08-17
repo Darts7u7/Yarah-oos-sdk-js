@@ -3,7 +3,7 @@ import type {
   PresenceJoinMessage,
   PresenceLeaveMessage,
   SubscribeResponse,
-} from '@insforge/shared-schemas';
+} from '@yarahdev/shared-schemas';
 import { Realtime } from '../realtime';
 import { TokenManager } from '../../lib/token-manager';
 

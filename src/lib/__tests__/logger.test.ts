@@ -51,7 +51,7 @@ describe('Logger', () => {
       logger.log('hello world');
 
       expect(logSpy).toHaveBeenCalledOnce();
-      expect(logSpy.mock.calls[0][0]).toContain('[InsForge Debug]');
+      expect(logSpy.mock.calls[0][0]).toContain('[Yarah Debug]');
       expect(logSpy.mock.calls[0][0]).toContain('hello world');
     });
 
@@ -62,7 +62,7 @@ describe('Logger', () => {
       logger.log('test message');
 
       expect(customFn).toHaveBeenCalledOnce();
-      expect(customFn.mock.calls[0][0]).toContain('[InsForge Debug]');
+      expect(customFn.mock.calls[0][0]).toContain('[Yarah Debug]');
       expect(customFn.mock.calls[0][0]).toContain('test message');
     });
 

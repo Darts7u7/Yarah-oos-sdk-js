@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       base-url:
-        description: 'InsForge project URL (overrides repo variable)'
+        description: 'Yarah project URL (overrides repo variable)'
         required: false
         type: string
       test-filter:
@@ -34,8 +34,8 @@ jobs:
             npm run test:integration:ci
           fi
         env:
-          INSFORGE_INTEGRATION_BASE_URL: ${{ inputs.base-url || vars.INSFORGE_INTEGRATION_BASE_URL }}
-          INSFORGE_INTEGRATION_ANON_KEY: ${{ secrets.INSFORGE_INTEGRATION_ANON_KEY }}
-          INSFORGE_INTEGRATION_TEST_EMAIL: ${{ secrets.INSFORGE_INTEGRATION_TEST_EMAIL }}
-          INSFORGE_INTEGRATION_TEST_PASSWORD: ${{ secrets.INSFORGE_INTEGRATION_TEST_PASSWORD }}
+          YARAH_INTEGRATION_BASE_URL: ${{ inputs.base-url || vars.YARAH_INTEGRATION_BASE_URL }}
+          YARAH_INTEGRATION_ANON_KEY: ${{ secrets.YARAH_INTEGRATION_ANON_KEY }}
+          YARAH_INTEGRATION_TEST_EMAIL: ${{ secrets.YARAH_INTEGRATION_TEST_EMAIL }}
+          YARAH_INTEGRATION_TEST_PASSWORD: ${{ secrets.YARAH_INTEGRATION_TEST_PASSWORD }}
           TEST_FILTER: ${{ inputs.test-filter }}

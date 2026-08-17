@@ -1,24 +1,24 @@
 /**
- * @insforge/sdk - TypeScript SDK for InsForge Backend-as-a-Service
+ * @yarahdev/sdk - TypeScript SDK for Yarah Backend-as-a-Service
  *
  * @packageDocumentation
  */
 
 // Main client
-export { InsForgeClient } from './client';
+export { YarahClient } from './client';
 export type { AccessTokenChangeEvent } from './client';
 
 // Types
 export type {
-  InsForgeConfig,
-  InsForgeConfig as ClientOptions, // Alias for compatibility
-  InsForgeAdminConfig,
+  YarahConfig,
+  YarahConfig as ClientOptions, // Alias for compatibility
+  YarahAdminConfig,
   AuthSession,
   ApiError,
-  InsForgeErrorCode,
+  YarahErrorCode,
 } from './types';
 
-export { InsForgeError } from './types';
+export { YarahError } from './types';
 
 // Re-export shared schemas that SDK users will need
 export type {
@@ -29,7 +29,7 @@ export type {
   AuthErrorResponse,
   DeleteObjectResult,
   DeleteObjectsResponse,
-} from '@insforge/shared-schemas';
+} from '@yarahdev/shared-schemas';
 
 // Re-export auth module for advanced usage
 export { Auth } from './modules/auth/auth';
@@ -75,21 +75,21 @@ export type { AuthStateChangeCallback } from './lib/token-manager';
 export { Logger } from './lib/logger';
 
 // Factory function for creating clients (Supabase-style)
-import { InsForgeClient } from './client';
-import type { InsForgeAdminConfig, InsForgeConfig } from './types';
+import { YarahClient } from './client';
+import type { YarahAdminConfig, YarahConfig } from './types';
 
-export function createClient(config: InsForgeConfig = {}): InsForgeClient {
-  return new InsForgeClient(config);
+export function createClient(config: YarahConfig = {}): YarahClient {
+  return new YarahClient(config);
 }
 
-export function createAdminClient(config: InsForgeAdminConfig): InsForgeClient {
+export function createAdminClient(config: YarahAdminConfig): YarahClient {
   const { apiKey: rawApiKey, ...clientConfig } = config ?? {};
   const apiKey = rawApiKey?.trim();
   if (!apiKey) {
     throw new Error('Missing apiKey. Pass apiKey to createAdminClient().');
   }
 
-  return new InsForgeClient({
+  return new YarahClient({
     ...clientConfig,
     accessToken: apiKey,
     isServerMode: true,
@@ -97,4 +97,4 @@ export function createAdminClient(config: InsForgeAdminConfig): InsForgeClient {
 }
 
 // Default export for convenience
-export default InsForgeClient;
+export default YarahClient;

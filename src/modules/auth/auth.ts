@@ -1,5 +1,5 @@
 /**
- * Auth module for InsForge SDK
+ * Auth module for Yarah SDK
  * Handles authentication, sessions, profiles, and email verification
  */
 
@@ -12,7 +12,7 @@ import {
   clearCsrfToken,
   type AuthStateChangeCallback,
 } from '../../lib/token-manager';
-import { AuthSession, InsForgeError } from '../../types';
+import { AuthSession, YarahError } from '../../types';
 import {
   generateCodeVerifier,
   generateCodeChallenge,
@@ -45,7 +45,7 @@ import {
   type UserSchema,
   type GetProfileResponse,
   type OAuthCodeExchangeRequest,
-} from '@insforge/shared-schemas';
+} from '@yarahdev/shared-schemas';
 
 interface AuthOptions {
   isServerMode?: boolean;
@@ -126,7 +126,7 @@ export class Auth {
 
   /**
    * Detect and handle OAuth callback parameters in URL
-   * Supports PKCE flow (insforge_code)
+   * Supports PKCE flow (yarah_code)
    */
   private async detectAuthCallback(): Promise<void> {
     if (this.isServerMode() || typeof window === 'undefined') {
@@ -145,9 +145,9 @@ export class Auth {
       }
 
       // PKCE flow: exchange code for tokens
-      const code = params.get('insforge_code');
+      const code = params.get('yarah_code');
       if (code) {
-        cleanUrlParams('insforge_code');
+        cleanUrlParams('yarah_code');
         const { error: exchangeError } = await this.exchangeOAuthCode(code);
         if (exchangeError) {
           console.debug('OAuth code exchange failed:', exchangeError.message);
@@ -165,7 +165,7 @@ export class Auth {
 
   async signUp(request: CreateUserRequest): Promise<{
     data: CreateUserResponse | null;
-    error: InsForgeError | null;
+    error: YarahError | null;
   }> {
     try {
       const response = await this.http.post<CreateUserResponse>(
@@ -189,7 +189,7 @@ export class Auth {
 
   async signInWithPassword(request: PasswordSessionRequest): Promise<{
     data: CreateSessionResponse | null;
-    error: InsForgeError | null;
+    error: YarahError | null;
   }> {
     try {
       const response = await this.http.post<CreateSessionResponse>(
@@ -217,7 +217,7 @@ export class Auth {
    */
   async signInWithOtp(request: SendOTPRequest): Promise<{
     data: { success: boolean; message: string } | null;
-    error: InsForgeError | null;
+    error: YarahError | null;
   }> {
     try {
       const response = await this.http.post<{ success: boolean; message: string }>(
@@ -239,7 +239,7 @@ export class Auth {
    */
   async verifyOtp(request: VerifyOtpRequest): Promise<{
     data: CreateSessionResponse | null;
-    error: InsForgeError | null;
+    error: YarahError | null;
   }> {
     try {
       const response = await this.http.post<CreateSessionResponse>(
@@ -260,7 +260,7 @@ export class Auth {
     }
   }
 
-  async signOut(): Promise<{ error: InsForgeError | null }> {
+  async signOut(): Promise<{ error: YarahError | null }> {
     try {
       // Try backend logout first
       try {
@@ -289,7 +289,7 @@ export class Auth {
       return { error: null };
     } catch {
       return {
-        error: new InsForgeError('Failed to sign out', 500, 'SIGNOUT_ERROR'),
+        error: new YarahError('Failed to sign out', 500, 'SIGNOUT_ERROR'),
       };
     }
   }
@@ -306,21 +306,21 @@ export class Auth {
     options: OAuthSignInOptions
   ): Promise<{
     data: { url?: string; provider?: string; codeVerifier?: string };
-    error: InsForgeError | null;
+    error: YarahError | null;
   }>;
   /**
    * @deprecated Use signInWithOAuth(provider, { redirectTo, additionalParams, skipBrowserRedirect }).
    */
   async signInWithOAuth(options: OAuthSignInLegacyOptions): Promise<{
     data: { url?: string; provider?: string; codeVerifier?: string };
-    error: InsForgeError | null;
+    error: YarahError | null;
   }>;
   async signInWithOAuth(
     providerOrOptions: OAuthProvidersSchema | string | OAuthSignInLegacyOptions,
     options?: OAuthSignInOptions
   ): Promise<{
     data: { url?: string; provider?: string; codeVerifier?: string };
-    error: InsForgeError | null;
+    error: YarahError | null;
   }> {
     try {
       let signInOptions: OAuthSignInLegacyOptions;
@@ -332,7 +332,7 @@ export class Auth {
       } else {
         return {
           data: {},
-          error: new InsForgeError(
+          error: new YarahError(
             'OAuth sign-in options are required',
             400,
             ERROR_CODES.INVALID_INPUT
@@ -343,7 +343,7 @@ export class Auth {
       if (!signInOptions || !signInOptions.redirectTo) {
         return {
           data: {},
-          error: new InsForgeError('Redirect URI is required', 400, ERROR_CODES.INVALID_INPUT),
+          error: new YarahError('Redirect URI is required', 400, ERROR_CODES.INVALID_INPUT),
         };
       }
 
@@ -386,12 +386,12 @@ export class Auth {
         error: null,
       };
     } catch (error) {
-      if (error instanceof InsForgeError) {
+      if (error instanceof YarahError) {
         return { data: {}, error };
       }
       return {
         data: {},
-        error: new InsForgeError(
+        error: new YarahError(
           'An unexpected error occurred during OAuth initialization',
           500,
           'UNEXPECTED_ERROR'
@@ -402,14 +402,14 @@ export class Auth {
 
   /**
    * Exchange OAuth authorization code for tokens (PKCE flow)
-   * Called automatically on initialization when insforge_code is in URL
+   * Called automatically on initialization when yarah_code is in URL
    */
   async exchangeOAuthCode(
     code: string,
     codeVerifier?: string
   ): Promise<{
     data: CreateSessionResponse | null;
-    error: InsForgeError | null;
+    error: YarahError | null;
   }> {
     try {
       const verifier = codeVerifier ?? retrievePkceVerifier();
@@ -417,7 +417,7 @@ export class Auth {
       if (!verifier) {
         return {
           data: null,
-          error: new InsForgeError(
+          error: new YarahError(
             'PKCE code verifier not found. Ensure signInWithOAuth was called in the same browser session.',
             400,
             'PKCE_VERIFIER_MISSING'
@@ -457,7 +457,7 @@ export class Auth {
    */
   async signInWithIdToken(credentials: { provider: 'google'; token: string }): Promise<{
     data: CreateSessionResponse | null;
-    error: InsForgeError | null;
+    error: YarahError | null;
   }> {
     try {
       const { provider, token } = credentials;
@@ -496,17 +496,17 @@ export class Auth {
    * - Uses mobile auth flow and requires `refreshToken` in request body.
    *
    * SSR apps should prefer `createRefreshAuthRouter()` / `refreshAuth()` from
-   * `@insforge/sdk/ssr`.
+   * `@yarahdev/sdk/ssr`.
    */
   async refreshSession(options?: { refreshToken?: string }): Promise<{
     data: RefreshSessionResponse | null;
-    error: InsForgeError | null;
+    error: YarahError | null;
   }> {
     try {
       if (this.isServerMode() && !options?.refreshToken) {
         return {
           data: null,
-          error: new InsForgeError(
+          error: new YarahError(
             'refreshToken is required when refreshing session in server mode',
             400,
             ERROR_CODES.AUTH_UNAUTHORIZED
@@ -541,7 +541,7 @@ export class Auth {
    */
   async getCurrentUser(): Promise<{
     data: { user: UserSchema | null };
-    error: InsForgeError | null;
+    error: YarahError | null;
   }> {
     await this.authCallbackHandled;
 
@@ -578,12 +578,12 @@ export class Auth {
 
       return { data: { user: null }, error: null };
     } catch (error) {
-      if (error instanceof InsForgeError) {
+      if (error instanceof YarahError) {
         return { data: { user: null }, error };
       }
       return {
         data: { user: null },
-        error: new InsForgeError(
+        error: new YarahError(
           'An unexpected error occurred while getting user',
           500,
           'UNEXPECTED_ERROR'
@@ -598,7 +598,7 @@ export class Auth {
 
   async getProfile(userId: string): Promise<{
     data: GetProfileResponse | null;
-    error: InsForgeError | null;
+    error: YarahError | null;
   }> {
     try {
       const response = await this.http.get<GetProfileResponse>(`/api/auth/profiles/${userId}`);
@@ -610,7 +610,7 @@ export class Auth {
 
   async setProfile(profile: Record<string, unknown>): Promise<{
     data: GetProfileResponse | null;
-    error: InsForgeError | null;
+    error: YarahError | null;
   }> {
     try {
       const response = await this.http.patch<GetProfileResponse>('/api/auth/profiles/current', {
@@ -637,7 +637,7 @@ export class Auth {
 
   async resendVerificationEmail(request: SendVerificationEmailRequest): Promise<{
     data: { success: boolean; message: string } | null;
-    error: InsForgeError | null;
+    error: YarahError | null;
   }> {
     try {
       const response = await this.http.post<{
@@ -654,7 +654,7 @@ export class Auth {
 
   async verifyEmail(request: VerifyEmailRequest): Promise<{
     data: VerifyEmailResponse | null;
-    error: InsForgeError | null;
+    error: YarahError | null;
   }> {
     try {
       const response = await this.http.post<VerifyEmailResponse>(
@@ -681,7 +681,7 @@ export class Auth {
 
   async sendResetPasswordEmail(request: SendResetPasswordEmailRequest): Promise<{
     data: { success: boolean; message: string } | null;
-    error: InsForgeError | null;
+    error: YarahError | null;
   }> {
     try {
       const response = await this.http.post<{
@@ -698,7 +698,7 @@ export class Auth {
 
   async exchangeResetPasswordToken(request: ExchangeResetPasswordTokenRequest): Promise<{
     data: ExchangeResetPasswordTokenResponse | null;
-    error: InsForgeError | null;
+    error: YarahError | null;
   }> {
     try {
       const response = await this.http.post<ExchangeResetPasswordTokenResponse>(
@@ -714,7 +714,7 @@ export class Auth {
 
   async resetPassword(request: { newPassword: string; otp: string }): Promise<{
     data: ResetPasswordResponse | null;
-    error: InsForgeError | null;
+    error: YarahError | null;
   }> {
     try {
       const response = await this.http.post<ResetPasswordResponse>(
@@ -734,7 +734,7 @@ export class Auth {
 
   async getPublicAuthConfig(): Promise<{
     data: GetPublicAuthConfigResponse | null;
-    error: InsForgeError | null;
+    error: YarahError | null;
   }> {
     try {
       const response = await this.http.get<GetPublicAuthConfigResponse>('/api/auth/public-config', {

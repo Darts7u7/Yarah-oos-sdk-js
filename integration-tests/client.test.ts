@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { getTestEnv } from './setup';
-import { InsForgeClient, createClient, InsForgeError, HttpClient } from '../src/index';
+import { YarahClient, createClient, YarahError, HttpClient } from '../src/index';
 
 /**
  * Client construction and factory integration tests.
  *
  * Public API tested:
- *   new InsForgeClient(config)
+ *   new YarahClient(config)
  *   createClient(config)          – factory function
  *   client.auth                   – module availability
  *   client.database               – module availability
@@ -16,10 +16,10 @@ import { InsForgeClient, createClient, InsForgeError, HttpClient } from '../src/
  *   client.realtime               – module availability
  *   client.emails                 – module availability
  *   client.getHttpClient()        – returns HttpClient
- *   InsForgeError                 – class construction & fromApiError
+ *   YarahError                 – class construction & fromApiError
  */
 
-describe('InsForgeClient', () => {
+describe('YarahClient', () => {
   const env = getTestEnv();
 
   // ================================================================
@@ -28,74 +28,74 @@ describe('InsForgeClient', () => {
 
   describe('constructor', () => {
     it('should create a client with baseUrl and anonKey', () => {
-      const client = new InsForgeClient({
+      const client = new YarahClient({
         baseUrl: env.baseUrl,
         anonKey: env.anonKey,
       });
 
-      expect(client).toBeInstanceOf(InsForgeClient);
+      expect(client).toBeInstanceOf(YarahClient);
     });
 
     it('should create a client with default config', () => {
-      const client = new InsForgeClient();
-      expect(client).toBeInstanceOf(InsForgeClient);
+      const client = new YarahClient();
+      expect(client).toBeInstanceOf(YarahClient);
     });
 
     it('should create a client in server mode', () => {
-      const client = new InsForgeClient({
+      const client = new YarahClient({
         baseUrl: env.baseUrl,
         anonKey: env.anonKey,
         isServerMode: true,
       });
-      expect(client).toBeInstanceOf(InsForgeClient);
+      expect(client).toBeInstanceOf(YarahClient);
     });
 
     it('should accept custom headers', () => {
-      const client = new InsForgeClient({
+      const client = new YarahClient({
         baseUrl: env.baseUrl,
         anonKey: env.anonKey,
         headers: { 'X-Custom': 'test' },
       });
-      expect(client).toBeInstanceOf(InsForgeClient);
+      expect(client).toBeInstanceOf(YarahClient);
     });
 
     it('should accept timeout and retry config', () => {
-      const client = new InsForgeClient({
+      const client = new YarahClient({
         baseUrl: env.baseUrl,
         anonKey: env.anonKey,
         timeout: 15000,
         retryCount: 1,
         retryDelay: 200,
       });
-      expect(client).toBeInstanceOf(InsForgeClient);
+      expect(client).toBeInstanceOf(YarahClient);
     });
 
     it('should accept debug flag', () => {
-      const client = new InsForgeClient({
+      const client = new YarahClient({
         baseUrl: env.baseUrl,
         debug: true,
       });
-      expect(client).toBeInstanceOf(InsForgeClient);
+      expect(client).toBeInstanceOf(YarahClient);
     });
 
     it('should accept a custom debug function', () => {
       const logs: string[] = [];
-      const client = new InsForgeClient({
+      const client = new YarahClient({
         baseUrl: env.baseUrl,
         debug: (msg: string) => logs.push(msg),
       });
-      expect(client).toBeInstanceOf(InsForgeClient);
+      expect(client).toBeInstanceOf(YarahClient);
     });
 
     it('should set auth token when accessToken is provided', () => {
       const fakeToken = 'static-jwt-token-abc123';
-      const client = new InsForgeClient({
+      const client = new YarahClient({
         baseUrl: env.baseUrl,
         anonKey: env.anonKey,
         accessToken: fakeToken,
       });
 
-      expect(client).toBeInstanceOf(InsForgeClient);
+      expect(client).toBeInstanceOf(YarahClient);
       // The token should be set on the HTTP client
       const headers = client.getHttpClient().getHeaders();
       expect(headers['Authorization']).toBe(`Bearer ${fakeToken}`);
@@ -103,26 +103,26 @@ describe('InsForgeClient', () => {
 
     it('should still accept the deprecated edgeFunctionToken alias', () => {
       const fakeToken = 'edge-fn-jwt-token-abc123';
-      const client = new InsForgeClient({
+      const client = new YarahClient({
         baseUrl: env.baseUrl,
         anonKey: env.anonKey,
         edgeFunctionToken: fakeToken,
       });
 
-      expect(client).toBeInstanceOf(InsForgeClient);
+      expect(client).toBeInstanceOf(YarahClient);
       const headers = client.getHttpClient().getHeaders();
       expect(headers['Authorization']).toBe(`Bearer ${fakeToken}`);
     });
 
     it('should accept a custom functionsUrl', async () => {
       const functionsUrl = 'https://custom-functions-host.example.com';
-      const client = new InsForgeClient({
+      const client = new YarahClient({
         baseUrl: env.baseUrl,
         anonKey: env.anonKey,
         functionsUrl,
       });
 
-      expect(client).toBeInstanceOf(InsForgeClient);
+      expect(client).toBeInstanceOf(YarahClient);
       expect(client.functions).toBeDefined();
 
       // Invoke a function – the SDK should attempt the custom functionsUrl first.
@@ -147,10 +147,10 @@ describe('InsForgeClient', () => {
   // ================================================================
 
   describe('modules', () => {
-    let client: InsForgeClient;
+    let client: YarahClient;
 
     beforeAll(() => {
-      client = new InsForgeClient({ baseUrl: env.baseUrl, anonKey: env.anonKey });
+      client = new YarahClient({ baseUrl: env.baseUrl, anonKey: env.anonKey });
     });
 
     it('should expose auth module', () => {
@@ -225,7 +225,7 @@ describe('InsForgeClient', () => {
 
   describe('getHttpClient()', () => {
     it('should return an HttpClient instance', () => {
-      const client = new InsForgeClient({ baseUrl: env.baseUrl, anonKey: env.anonKey });
+      const client = new YarahClient({ baseUrl: env.baseUrl, anonKey: env.anonKey });
       const http = client.getHttpClient();
 
       expect(http).toBeDefined();
@@ -247,10 +247,10 @@ describe('InsForgeClient', () => {
   // ================================================================
 
   describe('createClient() factory', () => {
-    it('should create a client identical to new InsForgeClient()', () => {
+    it('should create a client identical to new YarahClient()', () => {
       const client = createClient({ baseUrl: env.baseUrl, anonKey: env.anonKey });
 
-      expect(client).toBeInstanceOf(InsForgeClient);
+      expect(client).toBeInstanceOf(YarahClient);
       expect(client.auth).toBeDefined();
       expect(client.database).toBeDefined();
       expect(client.storage).toBeDefined();
@@ -262,35 +262,35 @@ describe('InsForgeClient', () => {
   });
 
   // ================================================================
-  // InsForgeError
+  // YarahError
   // ================================================================
 
-  describe('InsForgeError', () => {
+  describe('YarahError', () => {
     it('should construct with message, statusCode, error', () => {
-      const err = new InsForgeError('test error', 400, 'BAD_REQUEST');
+      const err = new YarahError('test error', 400, 'BAD_REQUEST');
 
       expect(err).toBeInstanceOf(Error);
-      expect(err).toBeInstanceOf(InsForgeError);
+      expect(err).toBeInstanceOf(YarahError);
       expect(err.message).toBe('test error');
       expect(err.statusCode).toBe(400);
       expect(err.error).toBe('BAD_REQUEST');
-      expect(err.name).toBe('InsForgeError');
+      expect(err.name).toBe('YarahError');
     });
 
     it('should construct with nextActions', () => {
-      const err = new InsForgeError('test', 400, 'ERR', 'Try again');
+      const err = new YarahError('test', 400, 'ERR', 'Try again');
       expect(err.nextActions).toBe('Try again');
     });
 
     it('fromApiError() should create from API error object', () => {
-      const err = InsForgeError.fromApiError({
+      const err = YarahError.fromApiError({
         error: 'VALIDATION_ERROR',
         message: 'Invalid input',
         statusCode: 422,
         nextActions: 'Check your input',
       });
 
-      expect(err).toBeInstanceOf(InsForgeError);
+      expect(err).toBeInstanceOf(YarahError);
       expect(err.message).toBe('Invalid input');
       expect(err.statusCode).toBe(422);
       expect(err.error).toBe('VALIDATION_ERROR');

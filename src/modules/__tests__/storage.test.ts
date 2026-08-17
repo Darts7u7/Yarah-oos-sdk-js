@@ -1,9 +1,9 @@
 import { describe, it, expect, expectTypeOf, vi, beforeEach } from 'vitest';
 import { StorageBucket, type StorageResponse } from '../storage';
 import { HttpClient } from '../../lib/http-client';
-import { InsForgeError } from '../../types';
+import { YarahError } from '../../types';
 import { TokenManager } from '../../lib/token-manager';
-import type { DeleteObjectsResponse } from '@insforge/shared-schemas';
+import type { DeleteObjectsResponse } from '@yarahdev/shared-schemas';
 
 function makeTokenManager(): TokenManager {
   return {
@@ -73,7 +73,7 @@ describe('StorageBucket.createSignedUrl', () => {
     const fetchFn = vi.fn().mockResolvedValue(
       jsonRes(200, {
         method: 'presigned',
-        url: 'https://cdn.insforge.dev/storage/app/docs/invoice.pdf?Signature=abc',
+        url: 'https://cdn.yarah.dev/storage/app/docs/invoice.pdf?Signature=abc',
         expiresAt: '2026-01-01T00:00:00.000Z',
       })
     );
@@ -83,7 +83,7 @@ describe('StorageBucket.createSignedUrl', () => {
 
     expect(result.error).toBeNull();
     expect(result.data?.signedUrl).toBe(
-      'https://cdn.insforge.dev/storage/app/docs/invoice.pdf?Signature=abc'
+      'https://cdn.yarah.dev/storage/app/docs/invoice.pdf?Signature=abc'
     );
     expect(result.data?.expiresAt).toBe('2026-01-01T00:00:00.000Z');
 
@@ -96,18 +96,18 @@ describe('StorageBucket.createSignedUrl', () => {
   it('defaults expiresIn to 3600 and returns expiresAt: null when absent', async () => {
     const fetchFn = vi
       .fn()
-      .mockResolvedValue(jsonRes(200, { method: 'presigned', url: 'https://cdn.insforge.dev/x' }));
+      .mockResolvedValue(jsonRes(200, { method: 'presigned', url: 'https://cdn.yarah.dev/x' }));
     const bucket = new StorageBucket('docs', makeHttp(fetchFn));
 
     const result = await bucket.createSignedUrl('x.pdf');
 
-    expect(result.data?.signedUrl).toBe('https://cdn.insforge.dev/x');
+    expect(result.data?.signedUrl).toBe('https://cdn.yarah.dev/x');
     expect(result.data?.expiresAt).toBeNull();
     const url = new URL(String(fetchFn.mock.calls[0][0]));
     expect(url.searchParams.get('expiresIn')).toBe('3600');
   });
 
-  it('maps a non-2xx response to { data: null, error: InsForgeError }', async () => {
+  it('maps a non-2xx response to { data: null, error: YarahError }', async () => {
     const fetchFn = vi
       .fn()
       .mockResolvedValue(
@@ -118,7 +118,7 @@ describe('StorageBucket.createSignedUrl', () => {
     const result = await bucket.createSignedUrl('missing.pdf');
 
     expect(result.data).toBeNull();
-    expect(result.error).toBeInstanceOf(InsForgeError);
+    expect(result.error).toBeInstanceOf(YarahError);
     expect(result.error?.statusCode).toBe(404);
     // STORAGE_NOT_FOUND is a real miss, not a missing route — no POST fallback.
     expect(fetchFn).toHaveBeenCalledOnce();
@@ -188,7 +188,7 @@ describe('StorageBucket.upload / uploadAuto (standard PUT semantics)', () => {
     expect(String(fetchFn.mock.calls[1][1]?.method)).toBe('PUT');
   });
 
-  it('surfaces a backend error as an InsForgeError', async () => {
+  it('surfaces a backend error as an YarahError', async () => {
     const fetchFn = vi
       .fn()
       .mockResolvedValue(
@@ -203,7 +203,7 @@ describe('StorageBucket.upload / uploadAuto (standard PUT semantics)', () => {
     const result = await bucket.upload('report.pdf', new Blob(['abc']));
 
     expect(result.data).toBeNull();
-    expect(result.error).toBeInstanceOf(InsForgeError);
+    expect(result.error).toBeInstanceOf(YarahError);
     expect(result.error?.statusCode).toBe(403);
   });
 
@@ -392,7 +392,7 @@ describe('StorageBucket.remove', () => {
     const result = await bucket.remove([]);
 
     expect(result.data).toBeNull();
-    expect(result.error).toBeInstanceOf(InsForgeError);
+    expect(result.error).toBeInstanceOf(YarahError);
     expect(result.error?.statusCode).toBe(400);
     expect(result.error?.message).toBe('At least one object key is required');
     expect(fetchFn).toHaveBeenCalledOnce();

@@ -6,10 +6,10 @@ import {
   signUpAndSignIn,
   TEST_PASSWORD,
 } from './setup';
-import type { InsForgeClient } from '../src/client';
+import type { YarahClient } from '../src/client';
 
 describe('Auth Module', () => {
-  let client: InsForgeClient;
+  let client: YarahClient;
 
   beforeAll(() => {
     client = createClient();
@@ -145,7 +145,7 @@ describe('Auth Module', () => {
     it('should reject non-existent email', async () => {
       const c = createClient();
       const { error } = await c.auth.signInWithPassword({
-        email: `ghost-${Date.now()}@test.insforge.dev`,
+        email: `ghost-${Date.now()}@test.yarah.dev`,
         password: TEST_PASSWORD,
       });
       expect(error).not.toBeNull();

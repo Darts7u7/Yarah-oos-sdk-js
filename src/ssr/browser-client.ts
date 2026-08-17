@@ -1,22 +1,22 @@
-import { InsForgeClient } from '../client';
+import { YarahClient } from '../client';
 import { AuthChangeEvent } from '../lib/token-manager';
-import { InsForgeError, type AuthRefreshResponse, type InsForgeConfig } from '../types';
+import { YarahError, type AuthRefreshResponse, type YarahConfig } from '../types';
 import { isJwtExpiredOrExpiring } from '../lib/jwt';
-import { ERROR_CODES } from '@insforge/shared-schemas';
+import { ERROR_CODES } from '@yarahdev/shared-schemas';
 import { getAccessTokenCookieName, getBrowserCookie, type AuthCookieSettings } from './cookies';
 
 type BrowserAuth = Pick<
-  InsForgeClient['auth'],
+  YarahClient['auth'],
   'getCurrentUser' | 'getProfile' | 'getPublicAuthConfig'
 >;
 
-export type BrowserInsForgeClient = Omit<InsForgeClient, 'auth'> & {
+export type BrowserYarahClient = Omit<YarahClient, 'auth'> & {
   readonly auth: BrowserAuth;
 };
 
 export interface CreateBrowserClientOptions
   extends
-    Omit<InsForgeConfig, 'accessToken' | 'edgeFunctionToken' | 'isServerMode' | 'auth'>,
+    Omit<YarahConfig, 'accessToken' | 'edgeFunctionToken' | 'isServerMode' | 'auth'>,
     AuthCookieSettings {
   refreshUrl?: string;
   refreshLeewaySeconds?: number;
@@ -30,21 +30,21 @@ async function parseRefreshResponse(response: Response): Promise<unknown> {
   return await response.text();
 }
 
-function toRefreshError(response: Response, body: unknown): InsForgeError {
+function toRefreshError(response: Response, body: unknown): YarahError {
   if (body && typeof body === 'object') {
     const errorBody = body as {
       error?: unknown;
       message?: unknown;
       statusCode?: unknown;
     };
-    return new InsForgeError(
+    return new YarahError(
       typeof errorBody.message === 'string' ? errorBody.message : 'Failed to refresh auth session',
       typeof errorBody.statusCode === 'number' ? errorBody.statusCode : response.status,
       typeof errorBody.error === 'string' ? errorBody.error : ERROR_CODES.UNKNOWN_ERROR
     );
   }
 
-  return new InsForgeError(
+  return new YarahError(
     typeof body === 'string' && body ? body : 'Failed to refresh auth session',
     response.status,
     ERROR_CODES.UNKNOWN_ERROR
@@ -98,17 +98,17 @@ function getRequestUrl(input: RequestInfo | URL): string {
 
 export function createBrowserClient(
   options: CreateBrowserClientOptions = {}
-): BrowserInsForgeClient {
+): BrowserYarahClient {
   let { baseUrl, anonKey } = options;
   try {
-    baseUrl ||= process.env.NEXT_PUBLIC_INSFORGE_URL;
-    anonKey ||= process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY;
+    baseUrl ||= process.env.NEXT_PUBLIC_YARAH_URL;
+    anonKey ||= process.env.NEXT_PUBLIC_YARAH_ANON_KEY;
   } catch {
     // process may be unavailable outside Next.js/browser-bundled envs.
   }
   if (!baseUrl || !anonKey) {
     throw new Error(
-      'Missing InsForge baseUrl or anonKey. Pass baseUrl and anonKey to createBrowserClient() or set NEXT_PUBLIC_INSFORGE_URL and NEXT_PUBLIC_INSFORGE_ANON_KEY.'
+      'Missing Yarah baseUrl or anonKey. Pass baseUrl and anonKey to createBrowserClient() or set NEXT_PUBLIC_YARAH_URL and NEXT_PUBLIC_YARAH_ANON_KEY.'
     );
   }
 
@@ -119,7 +119,7 @@ export function createBrowserClient(
     (globalThis.fetch
       ? globalThis.fetch.bind(globalThis)
       : (undefined as typeof fetch | undefined));
-  let client: InsForgeClient;
+  let client: YarahClient;
   let sessionChecked = false;
   let refreshPromise: Promise<AuthRefreshResponse | null> | null = null;
 
@@ -212,7 +212,7 @@ export function createBrowserClient(
     return fetchImpl(input, withAuthHeader(init, refreshed.accessToken));
   };
 
-  client = new InsForgeClient({
+  client = new YarahClient({
     ...options,
     baseUrl,
     anonKey,
@@ -240,5 +240,5 @@ export function createBrowserClient(
 
   // Runtime still returns the normal client object; SSR auth mutation guardrails
   // are enforced by the public TypeScript surface.
-  return client as unknown as BrowserInsForgeClient;
+  return client as unknown as BrowserYarahClient;
 }

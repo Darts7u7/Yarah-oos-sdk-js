@@ -1,6 +1,6 @@
 import { HttpClient } from '../lib/http-client';
 import { wrapError } from './auth/helpers';
-import type { InsForgeError } from '../types';
+import type { YarahError } from '../types';
 import type {
   CancelRazorpaySubscriptionBodyInput,
   CancelRazorpaySubscriptionResponse,
@@ -20,11 +20,11 @@ import type {
   VerifyRazorpayOrderResponse,
   VerifyRazorpaySubscriptionBody,
   VerifyRazorpaySubscriptionResponse,
-} from '@insforge/shared-schemas';
+} from '@yarahdev/shared-schemas';
 
 export interface PaymentsResponse<T> {
   data: T | null;
-  error: InsForgeError | null;
+  error: YarahError | null;
 }
 
 function providerEnvironmentPath(provider: 'stripe' | 'razorpay', environment: string): string {
@@ -42,7 +42,7 @@ export class StripePayments {
   constructor(private http: HttpClient) {}
 
   /**
-   * Create a Stripe Checkout Session through the InsForge backend.
+   * Create a Stripe Checkout Session through the Yarah backend.
    *
    * @example
    * ```typescript

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { signUpAndSignIn } from './setup';
-import type { InsForgeClient } from '../src/client';
+import type { YarahClient } from '../src/client';
 
 /**
  * Email module integration tests.
@@ -14,7 +14,7 @@ import type { InsForgeClient } from '../src/client';
  */
 
 describe('Email Module', () => {
-  let authedClient: InsForgeClient;
+  let authedClient: YarahClient;
 
   beforeAll(async () => {
     const result = await signUpAndSignIn();
@@ -25,9 +25,9 @@ describe('Email Module', () => {
   describe('send()', () => {
     it('should send an email with required fields', async () => {
       const { data, error } = await authedClient.emails.send({
-        to: 'sdk-test@test.insforge.dev',
+        to: 'sdk-test@test.yarah.dev',
         subject: 'SDK Integration Test – ' + new Date().toISOString(),
-        html: '<p>Automated test from InsForge SDK integration tests.</p>',
+        html: '<p>Automated test from Yarah SDK integration tests.</p>',
       });
 
       if (error) {
@@ -41,7 +41,7 @@ describe('Email Module', () => {
 
     it('should send an email with all optional fields', async () => {
       const { data, error } = await authedClient.emails.send({
-        to: ['sdk-test-a@test.insforge.dev', 'sdk-test-b@test.insforge.dev'],
+        to: ['sdk-test-a@test.yarah.dev', 'sdk-test-b@test.yarah.dev'],
         subject: 'SDK Full Fields Test',
         html: '<h1>Hello</h1><p>Body</p>',
       });

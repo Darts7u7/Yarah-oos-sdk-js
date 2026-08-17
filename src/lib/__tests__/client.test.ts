@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { InsForgeClient } from '../../client';
+import { YarahClient } from '../../client';
 import * as SDK from '../../index';
 import { AuthChangeEvent, createAdminClient } from '../../index';
 
@@ -31,10 +31,10 @@ describe('client factories', () => {
   });
 });
 
-describe('InsForgeClient – accessToken config', () => {
+describe('YarahClient – accessToken config', () => {
   it('seeds bearer auth and implies server mode', async () => {
     const fakeToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test';
-    const client = new InsForgeClient({
+    const client = new YarahClient({
       baseUrl: 'http://localhost:7130',
       accessToken: fakeToken,
     });
@@ -48,7 +48,7 @@ describe('InsForgeClient – accessToken config', () => {
   });
 
   it('takes precedence over the deprecated edgeFunctionToken alias', () => {
-    const client = new InsForgeClient({
+    const client = new YarahClient({
       baseUrl: 'http://localhost:7130',
       accessToken: 'new-token',
       edgeFunctionToken: 'old-token',
@@ -58,10 +58,10 @@ describe('InsForgeClient – accessToken config', () => {
   });
 });
 
-describe('InsForgeClient – edgeFunctionToken implies server mode', () => {
+describe('YarahClient – edgeFunctionToken implies server mode', () => {
   it('should auto-enable server mode when edgeFunctionToken is provided', async () => {
     const fakeToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test';
-    const client = new InsForgeClient({
+    const client = new YarahClient({
       baseUrl: 'http://localhost:7130',
       edgeFunctionToken: fakeToken,
     });
@@ -82,7 +82,7 @@ describe('InsForgeClient – edgeFunctionToken implies server mode', () => {
 
   it('should respect explicit isServerMode: false even with edgeFunctionToken', async () => {
     const fakeToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test';
-    const client = new InsForgeClient({
+    const client = new YarahClient({
       baseUrl: 'http://localhost:7130',
       edgeFunctionToken: fakeToken,
       isServerMode: false,
@@ -95,7 +95,7 @@ describe('InsForgeClient – edgeFunctionToken implies server mode', () => {
   });
 
   it('should default to browser mode when no edgeFunctionToken is provided', async () => {
-    const client = new InsForgeClient({
+    const client = new YarahClient({
       baseUrl: 'http://localhost:7130',
     });
 
@@ -106,7 +106,7 @@ describe('InsForgeClient – edgeFunctionToken implies server mode', () => {
   });
 });
 
-describe('InsForgeClient.setAccessToken', () => {
+describe('YarahClient.setAccessToken', () => {
   it('exports auth change events as runtime constants', () => {
     expect(AuthChangeEvent).toEqual({
       SIGNED_IN: 'signedIn',
@@ -120,7 +120,7 @@ describe('InsForgeClient.setAccessToken', () => {
   });
 
   it('allows callers to mark an external token replacement as a refresh', () => {
-    const client = new InsForgeClient({ baseUrl: 'http://localhost:7130' });
+    const client = new YarahClient({ baseUrl: 'http://localhost:7130' });
     const events: string[] = [];
     client.auth.onAuthStateChange((event) => events.push(event));
 
@@ -135,7 +135,7 @@ describe('InsForgeClient.setAccessToken', () => {
   });
 
   it('allows each auth-state listener to unsubscribe independently', () => {
-    const client = new InsForgeClient({ baseUrl: 'http://localhost:7130' });
+    const client = new YarahClient({ baseUrl: 'http://localhost:7130' });
     const first = vi.fn();
     const second = vi.fn();
     const unsubscribeFirst = client.auth.onAuthStateChange(first);

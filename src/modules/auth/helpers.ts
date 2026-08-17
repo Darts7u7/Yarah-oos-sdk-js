@@ -2,13 +2,13 @@
  * Auth module helper functions
  */
 
-import { InsForgeError } from '../../types';
+import { YarahError } from '../../types';
 
 // ============================================================================
 // PKCE (Proof Key for Code Exchange) - RFC 7636
 // ============================================================================
 
-const PKCE_VERIFIER_KEY = 'insforge_pkce_verifier';
+const PKCE_VERIFIER_KEY = 'yarah_pkce_verifier';
 
 type WebCrypto = Pick<Crypto, 'getRandomValues' | 'subtle'>;
 
@@ -89,19 +89,19 @@ export function retrievePkceVerifier(): string | null {
 
 /**
  * Wrap an error into the standard { data, error } format
- * Passes through InsForgeError unchanged, wraps other errors
+ * Passes through YarahError unchanged, wraps other errors
  */
 export function wrapError<T>(
   error: unknown,
   fallbackMessage: string
-): { data: T | null; error: InsForgeError } {
-  if (error instanceof InsForgeError) {
+): { data: T | null; error: YarahError } {
+  if (error instanceof YarahError) {
     return { data: null, error };
   }
 
   return {
     data: null,
-    error: new InsForgeError(
+    error: new YarahError(
       error instanceof Error ? error.message : fallbackMessage,
       500,
       'UNEXPECTED_ERROR'

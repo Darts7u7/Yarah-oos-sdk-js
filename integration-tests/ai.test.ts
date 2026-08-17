@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { signUpAndSignIn } from './setup';
-import type { InsForgeClient } from '../src/client';
+import type { YarahClient } from '../src/client';
 
 /**
  * AI module integration tests.
@@ -44,7 +44,7 @@ function isModelUnavailable(err: any): boolean {
 }
 
 describe('AI Module', () => {
-  let client: InsForgeClient;
+  let client: YarahClient;
 
   beforeAll(async () => {
     const result = await signUpAndSignIn();

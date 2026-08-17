@@ -1,11 +1,11 @@
 import { HttpClient } from '../lib/http-client';
-import { InsForgeError } from '../types';
-import type { SendRawEmailRequest, SendEmailResponse } from '@insforge/shared-schemas';
+import { YarahError } from '../types';
+import type { SendRawEmailRequest, SendEmailResponse } from '@yarahdev/shared-schemas';
 
 export type {
   SendRawEmailRequest as SendEmailOptions,
   SendEmailResponse,
-} from '@insforge/shared-schemas';
+} from '@yarahdev/shared-schemas';
 
 /**
  * Emails client for sending custom emails
@@ -48,7 +48,7 @@ export class Emails {
    */
   async send(
     options: SendRawEmailRequest
-  ): Promise<{ data: SendEmailResponse | null; error: InsForgeError | null }> {
+  ): Promise<{ data: SendEmailResponse | null; error: YarahError | null }> {
     try {
       const data = await this.http.post<SendEmailResponse>('/api/email/send-raw', options);
 
@@ -60,9 +60,9 @@ export class Emails {
       return {
         data: null,
         error:
-          error instanceof InsForgeError
+          error instanceof YarahError
             ? error
-            : new InsForgeError(
+            : new YarahError(
                 error instanceof Error ? error.message : 'Email send failed',
                 500,
                 'EMAIL_ERROR'

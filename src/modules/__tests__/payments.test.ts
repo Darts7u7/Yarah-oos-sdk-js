@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { HttpClient } from '../../lib/http-client';
 import { TokenManager } from '../../lib/token-manager';
 import { Payments } from '../payments';
-import { InsForgeError } from '../../types';
+import { YarahError } from '../../types';
 
 function makeTokenManager(): TokenManager {
   return {
@@ -205,7 +205,7 @@ describe('Payments', () => {
     expect(JSON.parse(init.body as string)).not.toHaveProperty('environment');
   });
 
-  it('surfaces Stripe checkout API errors as InsForgeError values', async () => {
+  it('surfaces Stripe checkout API errors as YarahError values', async () => {
     const fetchFn = vi
       .fn()
       .mockResolvedValue(jsonRes(400, { error: 'INVALID_INPUT', message: 'Bad checkout' }, 'Bad'));
@@ -219,7 +219,7 @@ describe('Payments', () => {
     });
 
     expect(result.data).toBeNull();
-    expect(result.error).toBeInstanceOf(InsForgeError);
+    expect(result.error).toBeInstanceOf(YarahError);
     expect(result.error?.error).toBe('INVALID_INPUT');
     expect(result.error?.message).toBe('Bad checkout');
   });
@@ -456,7 +456,7 @@ describe('Payments', () => {
       call: (payments: Payments) => payments.razorpay.resumeSubscription('test', 'sub_123'),
     },
   ])(
-    'surfaces $method unexpected errors as InsForgeError values',
+    'surfaces $method unexpected errors as YarahError values',
     async ({ call, fallbackMessage }) => {
       const post = vi.fn().mockRejectedValue('unexpected failure');
       const payments = new Payments({ post } as unknown as HttpClient);
@@ -464,7 +464,7 @@ describe('Payments', () => {
       const result = await call(payments);
 
       expect(result.data).toBeNull();
-      expect(result.error).toBeInstanceOf(InsForgeError);
+      expect(result.error).toBeInstanceOf(YarahError);
       expect(result.error?.error).toBe('UNEXPECTED_ERROR');
       expect(result.error?.statusCode).toBe(500);
       expect(result.error?.message).toBe(fallbackMessage);

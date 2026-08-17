@@ -1,5 +1,5 @@
-import { InsForgeClient } from '../client';
-import type { InsForgeConfig } from '../types';
+import { YarahClient } from '../client';
+import type { YarahConfig } from '../types';
 import {
   getAccessTokenCookieName,
   getCookieValue,
@@ -9,30 +9,30 @@ import {
 
 export interface CreateServerClientOptions
   extends
-    Omit<InsForgeConfig, 'accessToken' | 'edgeFunctionToken' | 'isServerMode' | 'auth'>,
+    Omit<YarahConfig, 'accessToken' | 'edgeFunctionToken' | 'isServerMode' | 'auth'>,
     AuthCookieSettings {
   cookies?: Pick<CookieStore, 'get'>;
   accessToken?: string;
 }
 
-export function createServerClient(options: CreateServerClientOptions = {}): InsForgeClient {
+export function createServerClient(options: CreateServerClientOptions = {}): YarahClient {
   let { baseUrl, anonKey } = options;
   try {
-    baseUrl ||= process.env.NEXT_PUBLIC_INSFORGE_URL;
-    anonKey ||= process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY;
+    baseUrl ||= process.env.NEXT_PUBLIC_YARAH_URL;
+    anonKey ||= process.env.NEXT_PUBLIC_YARAH_ANON_KEY;
   } catch {
     // process may be unavailable outside Next.js/browser-bundled envs.
   }
   if (!baseUrl || !anonKey) {
     throw new Error(
-      'Missing InsForge baseUrl or anonKey. Pass baseUrl and anonKey to createServerClient() or set NEXT_PUBLIC_INSFORGE_URL and NEXT_PUBLIC_INSFORGE_ANON_KEY.'
+      'Missing Yarah baseUrl or anonKey. Pass baseUrl and anonKey to createServerClient() or set NEXT_PUBLIC_YARAH_URL and NEXT_PUBLIC_YARAH_ANON_KEY.'
     );
   }
 
   const accessToken =
     options.accessToken ?? getCookieValue(options.cookies, getAccessTokenCookieName(options.names));
 
-  return new InsForgeClient({
+  return new YarahClient({
     ...options,
     baseUrl,
     anonKey,

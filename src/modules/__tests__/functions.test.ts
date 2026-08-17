@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Functions } from '../functions';
 import { HttpClient } from '../../lib/http-client';
-import { InsForgeError } from '../../types';
+import { YarahError } from '../../types';
 import { TokenManager } from '../../lib/token-manager';
 
 function makeTokenManager(): TokenManager {
@@ -25,10 +25,10 @@ function makeHttp(fetchFn: ReturnType<typeof vi.fn>) {
   );
 }
 
-function makeInsforgeHttp(fetchFn: ReturnType<typeof vi.fn> = vi.fn()) {
+function makeYarahHttp(fetchFn: ReturnType<typeof vi.fn> = vi.fn()) {
   return new HttpClient(
     {
-      baseUrl: 'https://app.us-west.insforge.app',
+      baseUrl: 'https://app.us-west.apps.yarah.dev',
       fetch: fetchFn as any,
       retryCount: 0,
       timeout: 0,
@@ -51,21 +51,21 @@ describe('Functions.invoke', () => {
   });
 
   afterEach(() => {
-    delete (globalThis as any).__insforge_dispatch__;
+    delete (globalThis as any).__yarah_dispatch__;
   });
 
   describe('HTTP path (no global)', () => {
     it('uses subhosting URL when functionsUrl is configured', async () => {
       const fetchFn = vi.fn().mockResolvedValue(jsonRes(200, { ok: true }));
       const http = makeHttp(fetchFn);
-      const fns = new Functions(http, 'https://app.function2.insforge.app');
+      const fns = new Functions(http, 'https://app.functions.yarah.dev');
 
       const result = await fns.invoke('hello', { body: { x: 1 } });
 
       expect(result).toEqual({ data: { ok: true }, error: null });
       expect(fetchFn).toHaveBeenCalledOnce();
       const calledUrl = fetchFn.mock.calls[0][0];
-      expect(String(calledUrl)).toBe('https://app.function2.insforge.app/hello');
+      expect(String(calledUrl)).toBe('https://app.functions.yarah.dev/hello');
     });
 
     it('falls back to proxy when subhosting returns 404', async () => {
@@ -74,7 +74,7 @@ describe('Functions.invoke', () => {
         .mockResolvedValueOnce(jsonRes(404, { error: 'NOT_FOUND', message: 'no' }, 'Not Found'))
         .mockResolvedValueOnce(jsonRes(200, { proxied: true }));
       const http = makeHttp(fetchFn);
-      const fns = new Functions(http, 'https://app.function2.insforge.app');
+      const fns = new Functions(http, 'https://app.functions.yarah.dev');
 
       const result = await fns.invoke('hello');
 
@@ -89,16 +89,16 @@ describe('Functions.invoke', () => {
       const fetchFn = vi.fn();
       const http = new HttpClient(
         {
-          baseUrl: 'https://app.us-west.insforge.app',
+          baseUrl: 'https://app.us-west.apps.yarah.dev',
           fetch: fetchFn as any,
           retryCount: 0,
           timeout: 0,
         },
         makeTokenManager()
       );
-      const fns = new Functions(http, 'https://app.function2.insforge.app');
+      const fns = new Functions(http, 'https://app.functions.yarah.dev');
       const dispatch = vi.fn().mockResolvedValue(jsonRes(200, { ok: 1 }));
-      (globalThis as any).__insforge_dispatch__ = dispatch;
+      (globalThis as any).__yarah_dispatch__ = dispatch;
 
       const result = await fns.invoke('hello', { body: { x: 1 } });
 
@@ -107,43 +107,43 @@ describe('Functions.invoke', () => {
       expect(dispatch).toHaveBeenCalledOnce();
     });
 
-    it('maps non-2xx JSON error to InsForgeError', async () => {
-      const http = makeInsforgeHttp();
+    it('maps non-2xx JSON error to YarahError', async () => {
+      const http = makeYarahHttp();
       const fns = new Functions(http);
-      (globalThis as any).__insforge_dispatch__ = vi
+      (globalThis as any).__yarah_dispatch__ = vi
         .fn()
         .mockResolvedValue(jsonRes(500, { error: 'BOOM', message: 'kapow' }, 'Server Error'));
 
       const result = await fns.invoke('hello');
 
       expect(result.data).toBeNull();
-      expect(result.error).toBeInstanceOf(InsForgeError);
+      expect(result.error).toBeInstanceOf(YarahError);
       expect(result.error?.statusCode).toBe(500);
       expect(result.error?.error).toBe('BOOM');
       expect(result.error?.message).toBe('kapow');
     });
 
-    it('wraps a thrown dispatch error as InsForgeError(500, FUNCTION_ERROR)', async () => {
-      const http = makeInsforgeHttp();
+    it('wraps a thrown dispatch error as YarahError(500, FUNCTION_ERROR)', async () => {
+      const http = makeYarahHttp();
       const fns = new Functions(http);
-      (globalThis as any).__insforge_dispatch__ = vi
+      (globalThis as any).__yarah_dispatch__ = vi
         .fn()
         .mockRejectedValue(new Error('handler crashed'));
 
       const result = await fns.invoke('hello');
 
       expect(result.data).toBeNull();
-      expect(result.error).toBeInstanceOf(InsForgeError);
+      expect(result.error).toBeInstanceOf(YarahError);
       expect(result.error?.statusCode).toBe(500);
       expect(result.error?.error).toBe('FUNCTION_ERROR');
       expect(result.error?.message).toBe('handler crashed');
     });
 
     it('sends body as JSON with application/json content-type', async () => {
-      const http = makeInsforgeHttp();
+      const http = makeYarahHttp();
       const fns = new Functions(http);
       const dispatch = vi.fn().mockResolvedValue(jsonRes(200, {}));
-      (globalThis as any).__insforge_dispatch__ = dispatch;
+      (globalThis as any).__yarah_dispatch__ = dispatch;
 
       await fns.invoke('hello', { body: { a: 1, b: 'x' } });
 
@@ -153,10 +153,10 @@ describe('Functions.invoke', () => {
     });
 
     it('forwards caller-provided headers (caller wins on conflict)', async () => {
-      const http = makeInsforgeHttp();
+      const http = makeYarahHttp();
       const fns = new Functions(http);
       const dispatch = vi.fn().mockResolvedValue(jsonRes(200, {}));
-      (globalThis as any).__insforge_dispatch__ = dispatch;
+      (globalThis as any).__yarah_dispatch__ = dispatch;
 
       await fns.invoke('hello', {
         body: { x: 1 },
@@ -169,10 +169,10 @@ describe('Functions.invoke', () => {
     });
 
     it('passes slug subpath through as request pathname', async () => {
-      const http = makeInsforgeHttp();
+      const http = makeYarahHttp();
       const fns = new Functions(http);
       const dispatch = vi.fn().mockResolvedValue(jsonRes(200, {}));
-      (globalThis as any).__insforge_dispatch__ = dispatch;
+      (globalThis as any).__yarah_dispatch__ = dispatch;
 
       await fns.invoke('foo/bar');
 
@@ -181,10 +181,10 @@ describe('Functions.invoke', () => {
     });
 
     it('uses GET without setting JSON content-type when method is GET', async () => {
-      const http = makeInsforgeHttp();
+      const http = makeYarahHttp();
       const fns = new Functions(http);
       const dispatch = vi.fn().mockResolvedValue(jsonRes(200, {}));
-      (globalThis as any).__insforge_dispatch__ = dispatch;
+      (globalThis as any).__yarah_dispatch__ = dispatch;
 
       await fns.invoke('hello', { method: 'GET' });
 
@@ -194,9 +194,9 @@ describe('Functions.invoke', () => {
     });
 
     it('returns { data: undefined, error: null } when dispatch returns 204', async () => {
-      const http = makeInsforgeHttp();
+      const http = makeYarahHttp();
       const fns = new Functions(http);
-      (globalThis as any).__insforge_dispatch__ = vi
+      (globalThis as any).__yarah_dispatch__ = vi
         .fn()
         .mockResolvedValue(new Response(null, { status: 204 }));
 
@@ -209,23 +209,23 @@ describe('Functions.invoke', () => {
       const fetchFn = vi.fn().mockResolvedValue(jsonRes(200, { remote: true }));
       const http = new HttpClient(
         {
-          baseUrl: 'https://app-a.us-west.insforge.app',
+          baseUrl: 'https://app-a.us-west.apps.yarah.dev',
           fetch: fetchFn as any,
           retryCount: 0,
           timeout: 0,
         },
         makeTokenManager()
       );
-      const fns = new Functions(http, 'https://app-b.function2.insforge.app');
+      const fns = new Functions(http, 'https://app-b.functions.yarah.dev');
       const dispatch = vi.fn();
-      (globalThis as any).__insforge_dispatch__ = dispatch;
+      (globalThis as any).__yarah_dispatch__ = dispatch;
 
       const result = await fns.invoke('hello');
 
       expect(result).toEqual({ data: { remote: true }, error: null });
       expect(dispatch).not.toHaveBeenCalled();
       expect(fetchFn).toHaveBeenCalledOnce();
-      expect(String(fetchFn.mock.calls[0][0])).toBe('https://app-b.function2.insforge.app/hello');
+      expect(String(fetchFn.mock.calls[0][0])).toBe('https://app-b.functions.yarah.dev/hello');
     });
   });
 });

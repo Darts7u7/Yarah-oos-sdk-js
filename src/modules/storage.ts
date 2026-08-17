@@ -1,19 +1,19 @@
 /**
- * Storage module for InsForge SDK
+ * Storage module for Yarah SDK
  * Handles file uploads, downloads, and bucket management
  */
 
 import { HttpClient } from '../lib/http-client';
-import { InsForgeError } from '../types';
+import { YarahError } from '../types';
 import type {
   StorageFileSchema,
   ListObjectsResponseSchema,
   DeleteObjectsResponse,
-} from '@insforge/shared-schemas';
+} from '@yarahdev/shared-schemas';
 
 export interface StorageResponse<T> {
   data: T | null;
-  error: InsForgeError | null;
+  error: YarahError | null;
 }
 
 interface UploadStrategy {
@@ -102,7 +102,7 @@ export class StorageBucket {
         return { data: response, error: null };
       }
 
-      throw new InsForgeError(
+      throw new YarahError(
         `Unsupported upload method: ${strategyResponse.method}`,
         500,
         'STORAGE_ERROR'
@@ -111,9 +111,9 @@ export class StorageBucket {
       return {
         data: null,
         error:
-          error instanceof InsForgeError
+          error instanceof YarahError
             ? error
-            : new InsForgeError('Upload failed', 500, 'STORAGE_ERROR'),
+            : new YarahError('Upload failed', 500, 'STORAGE_ERROR'),
       };
     }
   }
@@ -159,7 +159,7 @@ export class StorageBucket {
       });
 
       if (!uploadResponse.ok) {
-        throw new InsForgeError(
+        throw new YarahError(
           `Upload to storage failed: ${uploadResponse.statusText}`,
           uploadResponse.status,
           'STORAGE_ERROR'
@@ -190,9 +190,9 @@ export class StorageBucket {
         error: null,
       };
     } catch (error) {
-      throw error instanceof InsForgeError
+      throw error instanceof YarahError
         ? error
-        : new InsForgeError('Presigned upload failed', 500, 'STORAGE_ERROR');
+        : new YarahError('Presigned upload failed', 500, 'STORAGE_ERROR');
     }
   }
 
@@ -202,7 +202,7 @@ export class StorageBucket {
    * @param path - The object key/path
    * Returns the file as a Blob
    */
-  async download(path: string): Promise<{ data: Blob | null; error: InsForgeError | null }> {
+  async download(path: string): Promise<{ data: Blob | null; error: YarahError | null }> {
     try {
       // Get download strategy from backend - this is required.
       // GET on the canonical path aligns with S3-style object retrieval;
@@ -217,7 +217,7 @@ export class StorageBucket {
           `/api/storage/buckets/${this.bucketName}/download-strategy/objects/${encodedKey}`
         );
       } catch (err) {
-        const status = err instanceof InsForgeError ? err.statusCode : undefined;
+        const status = err instanceof YarahError ? err.statusCode : undefined;
         if (status === 404 || status === 405) {
           strategyResponse = await this.http.post<DownloadStrategy>(
             `/api/storage/buckets/${this.bucketName}/objects/${encodedKey}/download-strategy`,
@@ -247,9 +247,9 @@ export class StorageBucket {
       if (!response.ok) {
         try {
           const error = await response.json();
-          throw InsForgeError.fromApiError(error);
+          throw YarahError.fromApiError(error);
         } catch {
-          throw new InsForgeError(
+          throw new YarahError(
             `Download failed: ${response.statusText}`,
             response.status,
             'STORAGE_ERROR'
@@ -263,9 +263,9 @@ export class StorageBucket {
       return {
         data: null,
         error:
-          error instanceof InsForgeError
+          error instanceof YarahError
             ? error
-            : new InsForgeError('Download failed', 500, 'STORAGE_ERROR'),
+            : new YarahError('Download failed', 500, 'STORAGE_ERROR'),
       };
     }
   }
@@ -303,10 +303,10 @@ export class StorageBucket {
         { params: { expiresIn: expiresIn.toString() } }
       );
     } catch (error) {
-      const status = error instanceof InsForgeError ? error.statusCode : undefined;
+      const status = error instanceof YarahError ? error.statusCode : undefined;
       const isMissingRoute =
         (status === 404 || status === 405) &&
-        !(error instanceof InsForgeError && error.error === 'STORAGE_NOT_FOUND');
+        !(error instanceof YarahError && error.error === 'STORAGE_NOT_FOUND');
       if (!isMissingRoute) {
         throw error;
       }
@@ -349,9 +349,9 @@ export class StorageBucket {
       return {
         data: null,
         error:
-          error instanceof InsForgeError
+          error instanceof YarahError
             ? error
-            : new InsForgeError('Failed to create signed URL', 500, 'STORAGE_ERROR'),
+            : new YarahError('Failed to create signed URL', 500, 'STORAGE_ERROR'),
       };
     }
   }
@@ -388,9 +388,9 @@ export class StorageBucket {
       return {
         data: null,
         error:
-          error instanceof InsForgeError
+          error instanceof YarahError
             ? error
-            : new InsForgeError('Failed to create signed URLs', 500, 'STORAGE_ERROR'),
+            : new YarahError('Failed to create signed URLs', 500, 'STORAGE_ERROR'),
       };
     }
   }
@@ -434,9 +434,9 @@ export class StorageBucket {
       return {
         data: null,
         error:
-          error instanceof InsForgeError
+          error instanceof YarahError
             ? error
-            : new InsForgeError('List failed', 500, 'STORAGE_ERROR'),
+            : new YarahError('List failed', 500, 'STORAGE_ERROR'),
       };
     }
   }
@@ -478,9 +478,9 @@ export class StorageBucket {
       return {
         data: null,
         error:
-          error instanceof InsForgeError
+          error instanceof YarahError
             ? error
-            : new InsForgeError('Delete failed', 500, 'STORAGE_ERROR'),
+            : new YarahError('Delete failed', 500, 'STORAGE_ERROR'),
       };
     }
   }

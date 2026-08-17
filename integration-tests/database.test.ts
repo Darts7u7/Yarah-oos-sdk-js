@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { signUpAndSignIn } from './setup';
-import type { InsForgeClient } from '../src/client';
+import type { YarahClient } from '../src/client';
 
 /**
  * Database integration tests.
  *
- * Exercises the postgrest-js query builder through the InsForge SDK.
- * Full request path: SDK → HttpClient → InsForge API → PostgREST.
+ * Exercises the postgrest-js query builder through the Yarah SDK.
+ * Full request path: SDK → HttpClient → Yarah API → PostgREST.
  *
  * Prerequisite: a table `sdk_test` must exist on the test project.
  *   CREATE TABLE sdk_test (
@@ -27,7 +27,7 @@ const TABLE = 'sdk_test';
 let tableAvailable = true;
 
 describe('Database Module', () => {
-  let client: InsForgeClient;
+  let client: YarahClient;
   const insertedIds: number[] = [];
 
   beforeAll(async () => {

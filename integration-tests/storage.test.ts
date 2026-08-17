@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { signUpAndSignIn, getTestEnv } from './setup';
-import type { InsForgeClient } from '../src/client';
+import type { YarahClient } from '../src/client';
 
 /**
  * Storage integration tests.
@@ -24,7 +24,7 @@ const BUCKET = 'public';
 let bucketAvailable = true;
 
 describe('Storage Module', () => {
-  let client: InsForgeClient;
+  let client: YarahClient;
   let env: ReturnType<typeof getTestEnv>;
 
   beforeAll(async () => {

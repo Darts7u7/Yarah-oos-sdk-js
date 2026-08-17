@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
-import type { SubscribeResponse } from '@insforge/shared-schemas';
+import type { SubscribeResponse } from '@yarahdev/shared-schemas';
 import { createClient } from './setup';
-import type { InsForgeClient } from '../src/client';
+import type { YarahClient } from '../src/client';
 
 /**
  * Realtime module integration tests.
@@ -37,7 +37,7 @@ function expectSuccessfulSubscription(response: SubscribeResponse, channel: stri
 }
 
 describe('Realtime Module', () => {
-  let client: InsForgeClient;
+  let client: YarahClient;
   let realtimeAvailable = true;
 
   beforeAll(() => {

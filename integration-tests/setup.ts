@@ -2,13 +2,13 @@
  * Shared setup for integration tests.
  *
  * Environment variables:
- *   INSFORGE_INTEGRATION_BASE_URL  – required, e.g. https://xxx.us-east.insforge.app
- *   INSFORGE_INTEGRATION_ANON_KEY  – required, project anon key
+ *   YARAH_INTEGRATION_BASE_URL  – required, e.g. https://xxx.us-east.apps.yarah.dev
+ *   YARAH_INTEGRATION_ANON_KEY  – required, project anon key
  *
  * The suite creates its own users so no pre-existing credentials are needed.
  */
 
-import { InsForgeClient } from '../src/client';
+import { YarahClient } from '../src/client';
 import { createClient as createClientFactory } from '../src/index';
 
 // ---------------------------------------------------------------------------
@@ -28,25 +28,25 @@ export function getTestEnv(): TestEnv {
   }
 
   const baseUrl = (
-    process.env.INSFORGE_INTEGRATION_BASE_URL ||
-    process.env.INSFORGE_TEST_URL ||
+    process.env.YARAH_INTEGRATION_BASE_URL ||
+    process.env.YARAH_TEST_URL ||
     ''
   ).replace(/\/+$/, '');
 
   const anonKey =
-    process.env.INSFORGE_INTEGRATION_ANON_KEY || process.env.INSFORGE_TEST_ANON_KEY || '';
+    process.env.YARAH_INTEGRATION_ANON_KEY || process.env.YARAH_TEST_ANON_KEY || '';
 
   if (!baseUrl) {
     throw new Error(
-      'Missing INSFORGE_INTEGRATION_BASE_URL. Example:\n' +
-        '  INSFORGE_INTEGRATION_BASE_URL=https://gv5eyqe5.us-east.insforge.app \\\n' +
-        '  INSFORGE_INTEGRATION_ANON_KEY=<key> \\\n' +
+      'Missing YARAH_INTEGRATION_BASE_URL. Example:\n' +
+        '  YARAH_INTEGRATION_BASE_URL=https://gv5eyqe5.us-east.apps.yarah.dev \\\n' +
+        '  YARAH_INTEGRATION_ANON_KEY=<key> \\\n' +
         '  npm run test:integration'
     );
   }
 
   if (!anonKey) {
-    throw new Error('Missing INSFORGE_INTEGRATION_ANON_KEY. Provide the project anon key.');
+    throw new Error('Missing YARAH_INTEGRATION_ANON_KEY. Provide the project anon key.');
   }
 
   _env = { baseUrl, anonKey };
@@ -58,9 +58,9 @@ export function getTestEnv(): TestEnv {
 // ---------------------------------------------------------------------------
 
 /** Create a plain (unauthenticated) client in server mode. */
-export function createClient(overrides?: Partial<TestEnv>): InsForgeClient {
+export function createClient(overrides?: Partial<TestEnv>): YarahClient {
   const env = getTestEnv();
-  return new InsForgeClient({
+  return new YarahClient({
     baseUrl: overrides?.baseUrl ?? env.baseUrl,
     anonKey: overrides?.anonKey ?? env.anonKey,
     isServerMode: true,
@@ -68,7 +68,7 @@ export function createClient(overrides?: Partial<TestEnv>): InsForgeClient {
 }
 
 /** Same thing using the `createClient` factory export (covers that code path). */
-export function createClientViaFactory(overrides?: Partial<TestEnv>): InsForgeClient {
+export function createClientViaFactory(overrides?: Partial<TestEnv>): YarahClient {
   const env = getTestEnv();
   return createClientFactory({
     baseUrl: overrides?.baseUrl ?? env.baseUrl,
@@ -85,7 +85,7 @@ export function createClientViaFactory(overrides?: Partial<TestEnv>): InsForgeCl
 export function uniqueEmail(prefix = 'sdktest'): string {
   const ts = Date.now();
   const rand = Math.random().toString(36).slice(2, 8);
-  return `${prefix}+${ts}-${rand}@test.insforge.dev`;
+  return `${prefix}+${ts}-${rand}@test.yarah.dev`;
 }
 
 const TEST_PASSWORD = 'Test_P@ssword_123!';
@@ -97,12 +97,12 @@ export { TEST_PASSWORD };
 // ---------------------------------------------------------------------------
 
 function getFixedTestAccount() {
-  const email = process.env.INSFORGE_INTEGRATION_TEST_EMAIL || '';
-  const password = process.env.INSFORGE_INTEGRATION_TEST_PASSWORD || '';
+  const email = process.env.YARAH_INTEGRATION_TEST_EMAIL || '';
+  const password = process.env.YARAH_INTEGRATION_TEST_PASSWORD || '';
 
   if (!email || !password) {
     throw new Error(
-      'Missing INSFORGE_INTEGRATION_TEST_EMAIL or INSFORGE_INTEGRATION_TEST_PASSWORD.\n' +
+      'Missing YARAH_INTEGRATION_TEST_EMAIL or YARAH_INTEGRATION_TEST_PASSWORD.\n' +
         'These must be a pre-verified account for authenticated integration tests.'
     );
   }

@@ -97,16 +97,16 @@ function formatBody(body: any): string {
 }
 
 /**
- * Debug logger for the InsForge SDK.
+ * Debug logger for the Yarah SDK.
  * Logs HTTP request/response details with automatic redaction of sensitive data.
  *
  * @example
  * ```typescript
  * // Enable via SDK config
- * const client = new InsForgeClient({ debug: true });
+ * const client = new YarahClient({ debug: true });
  *
  * // Or with a custom log function
- * const client = new InsForgeClient({
+ * const client = new YarahClient({
  *   debug: (msg) => myLogger.info(msg)
  * });
  * ```
@@ -139,7 +139,7 @@ export class Logger {
     if (!this.enabled) {
       return;
     }
-    const formatted = `[InsForge Debug] ${message}`;
+    const formatted = `[Yarah Debug] ${message}`;
     if (this.customLog) {
       this.customLog(formatted, ...args);
     } else {
@@ -156,7 +156,7 @@ export class Logger {
     if (!this.enabled) {
       return;
     }
-    const formatted = `[InsForge Debug] ${message}`;
+    const formatted = `[Yarah Debug] ${message}`;
     if (this.customLog) {
       this.customLog(formatted, ...args);
     } else {
@@ -173,7 +173,7 @@ export class Logger {
     if (!this.enabled) {
       return;
     }
-    const formatted = `[InsForge Debug] ${message}`;
+    const formatted = `[Yarah Debug] ${message}`;
     if (this.customLog) {
       this.customLog(formatted, ...args);
     } else {

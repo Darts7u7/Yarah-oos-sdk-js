@@ -1,4 +1,4 @@
-import type { InsForgeConfig } from './types';
+import type { YarahConfig } from './types';
 import { HttpClient } from './lib/http-client';
 import { Logger } from './lib/logger';
 import { AuthChangeEvent, TokenManager } from './lib/token-manager';
@@ -15,13 +15,13 @@ export type AccessTokenChangeEvent =
   typeof AuthChangeEvent.SIGNED_IN | typeof AuthChangeEvent.TOKEN_REFRESHED;
 
 /**
- * Main InsForge SDK Client
+ * Main Yarah SDK Client
  *
  * @example
  * ```typescript
- * import { InsForgeClient } from '@insforge/sdk';
+ * import { YarahClient } from '@yarahdev/sdk';
  *
- * const client = new InsForgeClient({
+ * const client = new YarahClient({
  *   baseUrl: 'http://localhost:7130'
  * });
  *
@@ -52,13 +52,13 @@ export type AccessTokenChangeEvent =
  * });
  *
  * // Enable debug logging
- * const debugClient = new InsForgeClient({
+ * const debugClient = new YarahClient({
  *   baseUrl: 'http://localhost:7130',
  *   debug: true
  * });
  * ```
  */
-export class InsForgeClient {
+export class YarahClient {
   private http: HttpClient;
   private tokenManager: TokenManager;
   public readonly auth: Auth;
@@ -70,7 +70,7 @@ export class InsForgeClient {
   public readonly emails: Emails;
   public readonly payments: Payments;
 
-  constructor(config: InsForgeConfig = {}) {
+  constructor(config: YarahConfig = {}) {
     const logger = new Logger(config.debug);
     this.tokenManager = new TokenManager();
     this.http = new HttpClient(config, this.tokenManager, logger);
@@ -120,16 +120,16 @@ export class InsForgeClient {
    *
    * Use this when an external auth provider (Better Auth, Clerk, Auth0,
    * WorkOS, Kinde, Stytch, …) issues the JWT and you need to keep the
-   * long-lived InsForge client in sync. Without this, you'd have to call
+   * long-lived Yarah client in sync. Without this, you'd have to call
    * `client.getHttpClient().setAuthToken(token)` AND reach into the private
    * realtime token manager separately.
    *
    * @example
    * ```typescript
-   * import { AuthChangeEvent } from '@insforge/sdk';
+   * import { AuthChangeEvent } from '@yarahdev/sdk';
    *
    * // Refresh a third-party-issued JWT periodically
-   * const { token } = await fetch('/api/insforge-token').then((r) => r.json());
+   * const { token } = await fetch('/api/yarah-token').then((r) => r.json());
    * client.setAccessToken(token, AuthChangeEvent.TOKEN_REFRESHED);
    *
    * // Sign-out

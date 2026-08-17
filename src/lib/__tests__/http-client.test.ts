@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { HttpClient, serializeBody, parseResponse } from '../http-client';
-import { InsForgeError } from '../../types';
+import { YarahError } from '../../types';
 import { TokenManager } from '../token-manager';
 import * as tokenManagerModule from '../token-manager';
 
@@ -196,7 +196,7 @@ describe('HttpClient', () => {
       expect(callHeaders['X-Other']).toBe('other');
     });
 
-    it('should throw InsForgeError on 4xx error', async () => {
+    it('should throw YarahError on 4xx error', async () => {
       const mockFetch = vi.fn().mockResolvedValue(
         createJsonResponse(401, {
           error: 'Unauthorized',
@@ -206,7 +206,7 @@ describe('HttpClient', () => {
       );
 
       const client = createClient(mockFetch);
-      await expect(client.get('/api/protected')).rejects.toThrow(InsForgeError);
+      await expect(client.get('/api/protected')).rejects.toThrow(YarahError);
       await expect(client.get('/api/protected')).rejects.toMatchObject({
         statusCode: 401,
         error: 'Unauthorized',
@@ -234,8 +234,8 @@ describe('HttpClient', () => {
 
       const client = createClient(mockFetch, { timeout: 50 });
 
-      const error = (await client.get('/api/slow').catch((e: unknown) => e)) as InsForgeError;
-      expect(error).toBeInstanceOf(InsForgeError);
+      const error = (await client.get('/api/slow').catch((e: unknown) => e)) as YarahError;
+      expect(error).toBeInstanceOf(YarahError);
       expect(error.error).toBe('REQUEST_TIMEOUT');
       expect(error.message).toContain('timed out');
     });
@@ -282,8 +282,8 @@ describe('HttpClient', () => {
 
       const client = createClient(mockFetch, { retryCount: 2, retryDelay: 10 });
 
-      const error = (await client.get('/api/down').catch((e: unknown) => e)) as InsForgeError;
-      expect(error).toBeInstanceOf(InsForgeError);
+      const error = (await client.get('/api/down').catch((e: unknown) => e)) as YarahError;
+      expect(error).toBeInstanceOf(YarahError);
       expect(error.error).toBe('NETWORK_ERROR');
       expect(mockFetch).toHaveBeenCalledTimes(3); // 1 initial + 2 retries
     });
@@ -293,7 +293,7 @@ describe('HttpClient', () => {
 
       const client = createClient(mockFetch, { retryCount: 0 });
 
-      await expect(client.get('/api/fail')).rejects.toThrow(InsForgeError);
+      await expect(client.get('/api/fail')).rejects.toThrow(YarahError);
       expect(mockFetch).toHaveBeenCalledOnce();
     });
   });
@@ -347,8 +347,8 @@ describe('HttpClient', () => {
 
       const client = createClient(mockFetch, { retryCount: 2, retryDelay: 10 });
 
-      const error = (await client.get('/api/broken').catch((e: unknown) => e)) as InsForgeError;
-      expect(error).toBeInstanceOf(InsForgeError);
+      const error = (await client.get('/api/broken').catch((e: unknown) => e)) as YarahError;
+      expect(error).toBeInstanceOf(YarahError);
       expect(mockFetch).toHaveBeenCalledTimes(3);
     });
   });
@@ -365,7 +365,7 @@ describe('HttpClient', () => {
 
       const client = createClient(mockFetch, { retryCount: 3, retryDelay: 10 });
 
-      await expect(client.post('/api/submit', { bad: 'data' })).rejects.toThrow(InsForgeError);
+      await expect(client.post('/api/submit', { bad: 'data' })).rejects.toThrow(YarahError);
       expect(mockFetch).toHaveBeenCalledOnce();
     });
 
@@ -380,7 +380,7 @@ describe('HttpClient', () => {
 
       const client = createClient(mockFetch, { retryCount: 3, retryDelay: 10 });
 
-      await expect(client.get('/api/private')).rejects.toThrow(InsForgeError);
+      await expect(client.get('/api/private')).rejects.toThrow(YarahError);
       expect(mockFetch).toHaveBeenCalledOnce();
     });
 
@@ -395,7 +395,7 @@ describe('HttpClient', () => {
 
       const client = createClient(mockFetch, { retryCount: 3, retryDelay: 10 });
 
-      await expect(client.get('/api/missing')).rejects.toThrow(InsForgeError);
+      await expect(client.get('/api/missing')).rejects.toThrow(YarahError);
       expect(mockFetch).toHaveBeenCalledOnce();
     });
   });
@@ -406,7 +406,7 @@ describe('HttpClient', () => {
 
       const client = createClient(mockFetch, { retryCount: 3, retryDelay: 10 });
 
-      await expect(client.post('/api/create', { name: 'test' })).rejects.toThrow(InsForgeError);
+      await expect(client.post('/api/create', { name: 'test' })).rejects.toThrow(YarahError);
       expect(mockFetch).toHaveBeenCalledOnce();
     });
 
@@ -415,7 +415,7 @@ describe('HttpClient', () => {
 
       const client = createClient(mockFetch, { retryCount: 3, retryDelay: 10 });
 
-      await expect(client.patch('/api/update', { name: 'test' })).rejects.toThrow(InsForgeError);
+      await expect(client.patch('/api/update', { name: 'test' })).rejects.toThrow(YarahError);
       expect(mockFetch).toHaveBeenCalledOnce();
     });
 
@@ -520,8 +520,8 @@ describe('HttpClient', () => {
 
       const client = createClient(mockFetch, { retryCount: 3, retryDelay: 10 });
 
-      const error = (await client.get('/api/bad').catch((e: unknown) => e)) as InsForgeError;
-      expect(error).toBeInstanceOf(InsForgeError);
+      const error = (await client.get('/api/bad').catch((e: unknown) => e)) as YarahError;
+      expect(error).toBeInstanceOf(YarahError);
       expect(error.error).toBe('REQUEST_FAILED');
       expect(mockFetch).toHaveBeenCalledOnce(); // No retries
     });
@@ -638,9 +638,9 @@ describe('HttpClient', () => {
         );
 
       const client = createClient(mockFetch, {}, tokenManager);
-      const error = (await client.get('/api/protected').catch((e: unknown) => e)) as InsForgeError;
+      const error = (await client.get('/api/protected').catch((e: unknown) => e)) as YarahError;
 
-      expect(error).toBeInstanceOf(InsForgeError);
+      expect(error).toBeInstanceOf(YarahError);
       expect(error.error).toBe('UNAUTHORIZED');
       expect(mockFetch).toHaveBeenCalledOnce(); // No refresh attempt
     });
@@ -660,9 +660,9 @@ describe('HttpClient', () => {
       );
 
       const client = createClient(mockFetch, {}, tokenManager);
-      const error = (await client.get('/api/protected').catch((e: unknown) => e)) as InsForgeError;
+      const error = (await client.get('/api/protected').catch((e: unknown) => e)) as YarahError;
 
-      expect(error).toBeInstanceOf(InsForgeError);
+      expect(error).toBeInstanceOf(YarahError);
       expect(error.error).toBe('AUTH_UNAUTHORIZED');
       expect(mockFetch).toHaveBeenCalledOnce();
       expect(tokenManager.saveSession).not.toHaveBeenCalled();
@@ -686,9 +686,9 @@ describe('HttpClient', () => {
       client.setAuthToken('old-token');
       const error = (await client
         .post('/api/auth/sessions', {}, { skipAuthRefresh: true })
-        .catch((e: unknown) => e)) as InsForgeError;
+        .catch((e: unknown) => e)) as YarahError;
 
-      expect(error).toBeInstanceOf(InsForgeError);
+      expect(error).toBeInstanceOf(YarahError);
       expect(error.error).toBe('AUTH_UNAUTHORIZED');
       expect(mockFetch).toHaveBeenCalledOnce();
       expect(tokenManager.saveSession).not.toHaveBeenCalled();
@@ -710,9 +710,9 @@ describe('HttpClient', () => {
 
       const client = createClient(mockFetch, { isServerMode: true }, tokenManager);
       client.setAuthToken('old-token');
-      const error = (await client.get('/api/protected').catch((e: unknown) => e)) as InsForgeError;
+      const error = (await client.get('/api/protected').catch((e: unknown) => e)) as YarahError;
 
-      expect(error).toBeInstanceOf(InsForgeError);
+      expect(error).toBeInstanceOf(YarahError);
       expect(mockFetch).toHaveBeenCalledOnce();
       expect(tokenManager.saveSession).not.toHaveBeenCalled();
     });
@@ -737,9 +737,9 @@ describe('HttpClient', () => {
         tokenManager
       );
       client.setAuthToken('edge-token');
-      const error = (await client.get('/api/protected').catch((e: unknown) => e)) as InsForgeError;
+      const error = (await client.get('/api/protected').catch((e: unknown) => e)) as YarahError;
 
-      expect(error).toBeInstanceOf(InsForgeError);
+      expect(error).toBeInstanceOf(YarahError);
       expect(mockFetch).toHaveBeenCalledOnce();
       expect(tokenManager.saveSession).not.toHaveBeenCalled();
     });
@@ -764,9 +764,9 @@ describe('HttpClient', () => {
         tokenManager
       );
       client.setAuthToken('static-token');
-      const error = (await client.get('/api/protected').catch((e: unknown) => e)) as InsForgeError;
+      const error = (await client.get('/api/protected').catch((e: unknown) => e)) as YarahError;
 
-      expect(error).toBeInstanceOf(InsForgeError);
+      expect(error).toBeInstanceOf(YarahError);
       expect(mockFetch).toHaveBeenCalledOnce();
       expect(tokenManager.saveSession).not.toHaveBeenCalled();
     });
@@ -839,9 +839,9 @@ describe('HttpClient', () => {
       const client = createClient(mockFetch, {}, tokenManager);
       client.setAuthToken('old-token');
 
-      const error = (await client.get('/api/protected').catch((e: unknown) => e)) as InsForgeError;
+      const error = (await client.get('/api/protected').catch((e: unknown) => e)) as YarahError;
 
-      expect(error).toBeInstanceOf(InsForgeError);
+      expect(error).toBeInstanceOf(YarahError);
       expect(error.error).toBe('AUTH_UNAUTHORIZED');
       expect(mockFetch).toHaveBeenCalledTimes(3);
       expect(
@@ -1010,9 +1010,9 @@ describe('HttpClient', () => {
 
       const client = createClient(mockFetch, {}, tokenManager);
       client.setAuthToken('old-token');
-      const error = (await client.get('/api/protected').catch((e: unknown) => e)) as InsForgeError;
+      const error = (await client.get('/api/protected').catch((e: unknown) => e)) as YarahError;
 
-      expect(error).toBeInstanceOf(InsForgeError);
+      expect(error).toBeInstanceOf(YarahError);
       expect(error.error).toBe('REFRESH_EXPIRED');
       expect(tokenManager.clearSession).toHaveBeenCalledOnce();
     });
@@ -1036,9 +1036,9 @@ describe('HttpClient', () => {
 
       const client = createClient(mockFetch, {}, tokenManager);
       client.setAuthToken('old-token');
-      const error = (await client.get('/api/protected').catch((e: unknown) => e)) as InsForgeError;
+      const error = (await client.get('/api/protected').catch((e: unknown) => e)) as YarahError;
 
-      expect(error).toBeInstanceOf(InsForgeError);
+      expect(error).toBeInstanceOf(YarahError);
       expect(error.error).toBe('NETWORK_ERROR');
       expect(tokenManager.clearSession).not.toHaveBeenCalled();
       expect(client.getHeaders().Authorization).toBe('Bearer old-token');
@@ -1075,9 +1075,9 @@ describe('HttpClient', () => {
 
       const client = createClient(mockFetch, {}, tokenManager);
       client.setAuthToken('old-token');
-      const error = (await client.get('/api/protected').catch((e: unknown) => e)) as InsForgeError;
+      const error = (await client.get('/api/protected').catch((e: unknown) => e)) as YarahError;
 
-      expect(error).toBeInstanceOf(InsForgeError);
+      expect(error).toBeInstanceOf(YarahError);
       expect(error.statusCode).toBe(500);
       expect(tokenManager.saveSession).toHaveBeenCalledOnce();
       expect(tokenManager.clearSession).not.toHaveBeenCalled();
@@ -1157,9 +1157,9 @@ describe('HttpClient', () => {
       client.setAuthToken('old-token');
       const error = (await client
         .rawFetch('http://localhost:7130/api/database/records/todos')
-        .catch((e: unknown) => e)) as InsForgeError;
+        .catch((e: unknown) => e)) as YarahError;
 
-      expect(error).toBeInstanceOf(InsForgeError);
+      expect(error).toBeInstanceOf(YarahError);
       expect(error.error).toBe('NETWORK_ERROR');
       expect(tokenManager.saveSession).toHaveBeenCalledOnce();
       expect(tokenManager.clearSession).not.toHaveBeenCalled();
@@ -1488,7 +1488,7 @@ describe('parseResponse', () => {
     expect(await parseResponse(res)).toBe('hello');
   });
 
-  it('throws InsForgeError mapped from { error, message } body on non-2xx', async () => {
+  it('throws YarahError mapped from { error, message } body on non-2xx', async () => {
     const res = makeResponse({
       status: 400,
       statusText: 'Bad Request',
@@ -1502,19 +1502,19 @@ describe('parseResponse', () => {
     });
   });
 
-  it('preserves extra fields on InsForgeError from error body', async () => {
+  it('preserves extra fields on YarahError from error body', async () => {
     const res = makeResponse({
       status: 400,
       contentType: 'application/json',
       jsonValue: { error: 'X', message: 'm', requestId: 'r-1', detail: 'd' },
     });
     const err = await parseResponse(res).catch((e) => e);
-    expect(err).toBeInstanceOf(InsForgeError);
+    expect(err).toBeInstanceOf(YarahError);
     expect((err as any).requestId).toBe('r-1');
     expect((err as any).detail).toBe('d');
   });
 
-  it('throws generic InsForgeError on non-2xx without error body', async () => {
+  it('throws generic YarahError on non-2xx without error body', async () => {
     const res = makeResponse({
       status: 503,
       statusText: 'Service Unavailable',
@@ -1558,7 +1558,7 @@ describe('parseResponse', () => {
       jsonValue: { error: 'X', message: 'm', status: 404 },
     });
     const err = await parseResponse(res).catch((e) => e);
-    expect(err).toBeInstanceOf(InsForgeError);
+    expect(err).toBeInstanceOf(YarahError);
     expect((err as any).statusCode).toBe(404);
   });
 });
