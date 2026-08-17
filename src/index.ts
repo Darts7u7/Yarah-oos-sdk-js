@@ -1,0 +1,100 @@
+/**
+ * @insforge/sdk - TypeScript SDK for InsForge Backend-as-a-Service
+ *
+ * @packageDocumentation
+ */
+
+// Main client
+export { InsForgeClient } from './client';
+export type { AccessTokenChangeEvent } from './client';
+
+// Types
+export type {
+  InsForgeConfig,
+  InsForgeConfig as ClientOptions, // Alias for compatibility
+  InsForgeAdminConfig,
+  AuthSession,
+  ApiError,
+  InsForgeErrorCode,
+} from './types';
+
+export { InsForgeError } from './types';
+
+// Re-export shared schemas that SDK users will need
+export type {
+  UserSchema,
+  CreateUserRequest,
+  CreateSessionRequest,
+  SendOTPRequest,
+  AuthErrorResponse,
+  DeleteObjectResult,
+  DeleteObjectsResponse,
+} from '@insforge/shared-schemas';
+
+// Re-export auth module for advanced usage
+export { Auth } from './modules/auth/auth';
+export type { PasswordSessionRequest, VerifyOtpRequest } from './modules/auth/auth';
+
+// Re-export database module (using postgrest-js)
+export { Database } from './modules/database-postgrest';
+// Note: QueryBuilder is no longer exported as we use postgrest-js QueryBuilder internally
+
+// Re-export storage module and types
+export { Storage, StorageBucket } from './modules/storage';
+export type { StorageResponse } from './modules/storage';
+
+// Re-export AI module
+export { AI } from './modules/ai';
+
+// Re-export Functions module
+export { Functions } from './modules/functions';
+export type { FunctionInvokeOptions } from './modules/functions';
+
+// Re-export Emails module (Resend-compatible API)
+export { Emails } from './modules/email';
+export type { SendEmailOptions, SendEmailResponse } from './modules/email';
+
+// Re-export Payments module
+export { Payments } from './modules/payments';
+export type { PaymentsResponse } from './modules/payments';
+
+// Re-export Realtime module and types
+export { Realtime } from './modules/realtime';
+export type {
+  RealtimeErrorPayload,
+  SubscribeResponse,
+  SocketMessage,
+  ConnectionState,
+  EventCallback,
+} from './modules/realtime';
+
+// Re-export utilities for advanced usage
+export { HttpClient } from './lib/http-client';
+export { AuthChangeEvent } from './lib/token-manager';
+export type { AuthStateChangeCallback } from './lib/token-manager';
+export { Logger } from './lib/logger';
+
+// Factory function for creating clients (Supabase-style)
+import { InsForgeClient } from './client';
+import type { InsForgeAdminConfig, InsForgeConfig } from './types';
+
+export function createClient(config: InsForgeConfig = {}): InsForgeClient {
+  return new InsForgeClient(config);
+}
+
+export function createAdminClient(config: InsForgeAdminConfig): InsForgeClient {
+  const { apiKey: rawApiKey, ...clientConfig } = config ?? {};
+  const apiKey = rawApiKey?.trim();
+  if (!apiKey) {
+    throw new Error('Missing apiKey. Pass apiKey to createAdminClient().');
+  }
+
+  return new InsForgeClient({
+    ...clientConfig,
+    accessToken: apiKey,
+    isServerMode: true,
+  });
+}
+
+// Default export for convenience
+export default InsForgeClient;

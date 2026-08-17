@@ -1,0 +1,123 @@
+/**
+ * Auth module helper functions
+ */
+
+import { InsForgeError } from '../../types';
+
+// ============================================================================
+// PKCE (Proof Key for Code Exchange) - RFC 7636
+// ============================================================================
+
+const PKCE_VERIFIER_KEY = 'insforge_pkce_verifier';
+
+type WebCrypto = Pick<Crypto, 'getRandomValues' | 'subtle'>;
+
+async function getWebCrypto(): Promise<WebCrypto> {
+  const webCrypto = (
+    globalThis as typeof globalThis & {
+      crypto?: Partial<WebCrypto>;
+    }
+  ).crypto;
+
+  if (typeof webCrypto?.getRandomValues === 'function' && webCrypto.subtle) {
+    return webCrypto as WebCrypto;
+  }
+
+  if (typeof process !== 'undefined' && process.versions?.node) {
+    const { webcrypto } = await import('node:crypto');
+    return webcrypto as unknown as WebCrypto;
+  }
+
+  throw new Error('Web Crypto API is not available in this environment');
+}
+
+/**
+ * Base64 URL encode without padding (per RFC 7636)
+ */
+function base64UrlEncode(buffer: Uint8Array): string {
+  const base64 = btoa(String.fromCharCode(...buffer));
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/**
+ * Generate a cryptographically random code verifier for PKCE
+ */
+export async function generateCodeVerifier(): Promise<string> {
+  const webCrypto = await getWebCrypto();
+  const array = new Uint8Array(32);
+  webCrypto.getRandomValues(array);
+  return base64UrlEncode(array);
+}
+
+/**
+ * Generate code challenge from verifier using SHA-256 (S256 method)
+ */
+export async function generateCodeChallenge(verifier: string): Promise<string> {
+  const webCrypto = await getWebCrypto();
+  const encoder = new TextEncoder();
+  const data = encoder.encode(verifier);
+  const hash = await webCrypto.subtle.digest('SHA-256', data);
+  return base64UrlEncode(new Uint8Array(hash));
+}
+
+/**
+ * Store PKCE code verifier in sessionStorage
+ */
+export function storePkceVerifier(verifier: string): void {
+  if (typeof sessionStorage !== 'undefined') {
+    sessionStorage.setItem(PKCE_VERIFIER_KEY, verifier);
+  }
+}
+
+/**
+ * Retrieve and clear PKCE code verifier from sessionStorage
+ */
+export function retrievePkceVerifier(): string | null {
+  if (typeof sessionStorage === 'undefined') {
+    return null;
+  }
+  const verifier = sessionStorage.getItem(PKCE_VERIFIER_KEY);
+  if (verifier) {
+    sessionStorage.removeItem(PKCE_VERIFIER_KEY);
+  }
+  return verifier;
+}
+
+// ============================================================================
+// Error Helpers
+// ============================================================================
+
+/**
+ * Wrap an error into the standard { data, error } format
+ * Passes through InsForgeError unchanged, wraps other errors
+ */
+export function wrapError<T>(
+  error: unknown,
+  fallbackMessage: string
+): { data: T | null; error: InsForgeError } {
+  if (error instanceof InsForgeError) {
+    return { data: null, error };
+  }
+
+  return {
+    data: null,
+    error: new InsForgeError(
+      error instanceof Error ? error.message : fallbackMessage,
+      500,
+      'UNEXPECTED_ERROR'
+    ),
+  };
+}
+
+/**
+ * Clean up URL parameters (removes sensitive data from URL after OAuth callback)
+ */
+export function cleanUrlParams(...params: string[]): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const url = new URL(window.location.href);
+  params.forEach((p) => url.searchParams.delete(p));
+  window.history.replaceState({}, document.title, url.toString());
+}

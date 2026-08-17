@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "types": ["node", "vitest/globals"]
+  },
+  "include": [
+    "src/modules/__tests__/storage.test.ts",
+    "src/ssr/__tests__/ssr-cookie-types.test.ts"
+  ],
+  "exclude": []
+}
