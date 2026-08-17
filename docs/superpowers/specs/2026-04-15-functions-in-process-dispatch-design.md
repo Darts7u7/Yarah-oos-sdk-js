@@ -2,9 +2,9 @@
 
 ## Problem
 
-Yarah functions run on Deno Subhosting under a single-project, multi-function model: every function in a project is bundled into one Deno deployment, and an auto-generated `main.ts` does path-based routing (`/{slug}`). The deployment is reachable at `https://{appKey}.functions.apps.yarah.dev`.
+Yarah functions run on Deno Subhosting under a single-project, multi-function model: every function in a project is bundled into one Deno deployment, and an auto-generated `main.ts` does path-based routing (`/{slug}`). The deployment is reachable at `https://{appKey}.functions.yarah.dev`.
 
-When function B (running inside that deployment) uses the SDK to invoke function A, the SDK currently calls `https://{appKey}.functions.apps.yarah.dev/A`. Deno Subhosting detects this as a recursive request to the same deployment and returns:
+When function B (running inside that deployment) uses the SDK to invoke function A, the SDK currently calls `https://{appKey}.functions.yarah.dev/A`. Deno Subhosting detects this as a recursive request to the same deployment and returns:
 
 ```text
 508 Loop Detected — Recursive requests to the same deployment cannot be processed.
@@ -22,7 +22,7 @@ The trigger is the presence of `globalThis.__yarah_dispatch__`, which the auto-g
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
-│ Deno deployment ({appKey}.functions.apps.yarah.dev)       │
+│ Deno deployment ({appKey}.functions.yarah.dev)       │
 │                                                         │
 │   main.ts (auto-generated)                              │
 │     const dispatch = async (req) => { ...router... }    │
@@ -44,7 +44,7 @@ The trigger is the presence of `globalThis.__yarah_dispatch__`, which the auto-g
 └─────────────────────────────────────────────────────────┘
 
 External caller (browser / other server):
-  fetch → https://{appKey}.functions.apps.yarah.dev/A → Deno.serve(dispatch) → A
+  fetch → https://{appKey}.functions.yarah.dev/A → Deno.serve(dispatch) → A
 ```
 
 Function B's invocation never leaves the process. The router's full logic still runs (health check, slug lookup, subpath rewrite, request log, error wrapping), so the call is semantically equivalent to an HTTP hit.

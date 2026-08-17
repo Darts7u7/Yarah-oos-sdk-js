@@ -503,14 +503,14 @@ describe('Functions.invoke', () => {
     it('uses subhosting URL when functionsUrl is configured', async () => {
       const fetchFn = vi.fn().mockResolvedValue(jsonRes(200, { ok: true }));
       const http = makeHttp(fetchFn);
-      const fns = new Functions(http, 'https://app.functions.apps.yarah.dev');
+      const fns = new Functions(http, 'https://app.functions.yarah.dev');
 
       const result = await fns.invoke('hello', { body: { x: 1 } });
 
       expect(result).toEqual({ data: { ok: true }, error: null });
       expect(fetchFn).toHaveBeenCalledOnce();
       const calledUrl = fetchFn.mock.calls[0][0];
-      expect(String(calledUrl)).toBe('https://app.functions.apps.yarah.dev/hello');
+      expect(String(calledUrl)).toBe('https://app.functions.yarah.dev/hello');
     });
 
     it('falls back to proxy when subhosting returns 404', async () => {
@@ -519,7 +519,7 @@ describe('Functions.invoke', () => {
         .mockResolvedValueOnce(jsonRes(404, { error: 'NOT_FOUND', message: 'no' }, 'Not Found'))
         .mockResolvedValueOnce(jsonRes(200, { proxied: true }));
       const http = makeHttp(fetchFn);
-      const fns = new Functions(http, 'https://app.functions.apps.yarah.dev');
+      const fns = new Functions(http, 'https://app.functions.yarah.dev');
 
       const result = await fns.invoke('hello');
 
@@ -533,7 +533,7 @@ describe('Functions.invoke', () => {
     it('calls dispatch and returns parsed JSON without using fetch', async () => {
       const fetchFn = vi.fn();
       const http = makeHttp(fetchFn);
-      const fns = new Functions(http, 'https://app.functions.apps.yarah.dev');
+      const fns = new Functions(http, 'https://app.functions.yarah.dev');
       const dispatch = vi.fn().mockResolvedValue(jsonRes(200, { ok: 1 }));
       (globalThis as any).__yarah_dispatch__ = dispatch;
 
@@ -697,7 +697,7 @@ export class Functions {
   /**
    * Derive the subhosting URL from the base URL.
    * Base URL pattern: https://{appKey}.{region}.apps.yarah.dev
-   * Functions URL:    https://{appKey}.functions.apps.yarah.dev
+   * Functions URL:    https://{appKey}.functions.yarah.dev
    * Only applies to .apps.yarah.dev domains.
    */
   private static deriveSubhostingUrl(baseUrl: string): string | undefined {
@@ -705,7 +705,7 @@ export class Functions {
       const { hostname } = new URL(baseUrl);
       if (!hostname.endsWith('.apps.yarah.dev')) return undefined;
       const appKey = hostname.split('.')[0];
-      return `https://${appKey}.functions.apps.yarah.dev`;
+      return `https://${appKey}.functions.yarah.dev`;
     } catch {
       return undefined;
     }

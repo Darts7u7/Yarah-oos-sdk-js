@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/@yarahdev/sdk.svg)](https://www.npmjs.com/package/@yarahdev/sdk)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Official TypeScript/JavaScript SDK for [Yarah](https://github.com/Yarah/Yarah) - A powerful, open-source Backend-as-a-Service (BaaS) platform.
+Official TypeScript/JavaScript SDK for [Yarah](https://github.com/Darts7u7/Yarah-oos) - A powerful, open-source Backend-as-a-Service (BaaS) platform.
 
 ## Features
 
@@ -349,7 +349,7 @@ console.log(embeddings.data[0].embedding); // number[]
 For complete API reference and advanced usage, see:
 
 - **[SDK Reference](./SDK-REFERENCE.md)** - Complete API documentation
-- **[Yarah Main Repository](https://github.com/Yarah/Yarah)** - Backend platform and setup guides
+- **[Yarah Main Repository](https://github.com/Darts7u7/Yarah-oos)** - Backend platform and setup guides
 
 ## Configuration
 
@@ -628,12 +628,12 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](./LICE
 
 - **GitHub Issues**: [Report bugs or request features](https://github.com/Darts7u7/Yarah-oos-sdk-js/issues)
 - **Documentation**: [https://docs.yarah.com](https://docs.yarah.com)
-- **Main Repository**: [Yarah Backend Platform](https://github.com/Yarah/Yarah)
+- **Main Repository**: [Yarah Backend Platform](https://github.com/Darts7u7/Yarah-oos)
 
 ## Related Projects
 
-- **[Yarah](https://github.com/Yarah/Yarah)** - The main Yarah backend platform
-- **[Yarah MCP](https://github.com/Yarah/yarah-mcp)** - Model Context Protocol server for Yarah
+- **[Yarah](https://github.com/Darts7u7/Yarah-oos)** - The main Yarah backend platform
+- **[Yarah MCP](https://github.com/Darts7u7/Yarah-oos-mcp)** - Model Context Protocol server for Yarah
 
 ---
 

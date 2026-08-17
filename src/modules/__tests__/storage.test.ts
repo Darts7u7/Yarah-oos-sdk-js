@@ -188,7 +188,7 @@ describe('StorageBucket.upload / uploadAuto (standard PUT semantics)', () => {
     expect(String(fetchFn.mock.calls[1][1]?.method)).toBe('PUT');
   });
 
-  it('surfaces a backend error as an YarahError', async () => {
+  it('surfaces a backend error as a YarahError', async () => {
     const fetchFn = vi
       .fn()
       .mockResolvedValue(

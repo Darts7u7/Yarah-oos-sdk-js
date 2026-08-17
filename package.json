@@ -1,6 +1,6 @@
 {
   "name": "@yarahdev/sdk",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "Official JavaScript/TypeScript client for Yarah Backend-as-a-Service platform",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
